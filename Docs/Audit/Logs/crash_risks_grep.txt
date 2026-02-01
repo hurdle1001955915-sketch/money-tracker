@@ -1,0 +1,3 @@
+収支管理/CSVImportTypes.swift:429:        let amountStr = (amountIndex != nil ? row[safe: amountIndex!] : nil) ?? row[safe: 2] ?? ""
+収支管理/FixedCostBudgetViews.swift:340:            categoryBudgets[budget.categoryId!] = String(budget.amount)
+収支管理/KakeiboApp.swift:38:            fatalError("Unable to create any ModelContainer: \(error)")

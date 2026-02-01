@@ -1,0 +1,5 @@
+./Tests/AmazonCardCSVTests.swift
+./Tests/CSVParserTests.swift
+./Tests/DateParserTests.swift
+./Tests/AmountParserTests.swift
+./Tests/CSVImportTests.swift

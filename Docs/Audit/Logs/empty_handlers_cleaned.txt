@@ -1,0 +1,29 @@
+./収支管理/ImportHistoryManagementView.swift:58:                Button("キャンセル", role: .cancel) {}
+./収支管理/ImportHistoryManagementView.swift:67:                Button("キャンセル", role: .cancel) {}
+./収支管理/CSVImportWizardView.swift:62:                Button("続ける", role: .cancel) {}
+./収支管理/CSVImportWizardView.swift:1495:            Button("キャンセル", role: .cancel) {}
+./収支管理/SettingsView.swift:540:                Button("キャンセル", role: .cancel) {}
+./収支管理/SettingsView.swift:549:                Button("OK", role: .cancel) {}
+./収支管理/SettingsView.swift:554:                Button("OK", role: .cancel) {}
+./収支管理/SettingsView.swift:559:                Button("キャンセル", role: .cancel) {}
+./収支管理/SettingsView.swift:573:                Button("OK", role: .cancel) {}
+./収支管理/SettingsView.swift:578:                Button("OK", role: .cancel) {}
+./収支管理/SettingsView.swift:588:            Button("OK", role: .cancel) {}
+./収支管理/SettingsView.swift:593:            Button("OK", role: .cancel) {}
+./収支管理/SettingsView.swift:609:            Button("OK", role: .cancel) {}
+./収支管理/SettingsView.swift:614:            Button("OK", role: .cancel) {}
+./収支管理/SettingsView.swift:619:            Button("キャンセル", role: .cancel) { }
+./収支管理/SettingsView.swift:627:            Button("OK", role: .cancel) {}
+./収支管理/SettingsView.swift:632:            Button("OK", role: .cancel) {}
+./収支管理/ReceiptScannerView.swift:91:                    Button("キャンセル", role: .cancel) {}
+./収支管理/ReceiptScannerView.swift:94:                    Button("OK", role: .cancel) {}
+./収支管理/ReceiptScannerView.swift:100:                    Button("キャンセル", role: .cancel) {}
+./収支管理/ReceiptScannerView.swift:105:                    Button("OK", role: .cancel) {}
+./収支管理/ReceiptScannerView.swift:110:                    Button("OK", role: .cancel) {}
+./収支管理/SplitTransactionView.swift:201:                Button("OK", role: .cancel) {}
+./収支管理/FixedCostBudgetViews.swift:432:            Button("キャンセル", role: .cancel) {}
+./収支管理/TransferInputView.swift:199:                Button("OK", role: .cancel) {}
+./収支管理/KakeiboApp.swift:90:                    Button("OK", role: .cancel) { }
+./収支管理/ClassificationRulesView.swift:98:            Button("キャンセル", role: .cancel) {}
+./収支管理/AccountsView.swift:85:            Button("キャンセル", role: .cancel) {}
+./収支管理/InputView.swift:336:                Button("OK", role: .cancel) {}

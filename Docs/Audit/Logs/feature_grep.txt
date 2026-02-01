@@ -1,0 +1,100 @@
+収支管理/AccountDetailView.swift:6:    @EnvironmentObject var dataStore: DataStore
+収支管理/AccountDetailView.swift:64:                        TransactionRow(tx: tx, dataStore: dataStore)
+収支管理/AccountDetailView.swift:82:        let cal = Calendar.current
+収支管理/AccountDetailView.swift:99:// DataStore.swiftなどに既に似たものがあるかもしれないが、簡易的に実装or再利用
+収支管理/AccountDetailView.swift:100:private struct TransactionRow: View {
+収支管理/AccountDetailView.swift:101:    let tx: Transaction
+収支管理/AccountDetailView.swift:102:    let dataStore: DataStore
+収支管理/AccountStore.swift:5:#if canImport(SwiftData)
+収支管理/AccountStore.swift:83:    func balance(for accountId: UUID, transactions: [Transaction], asOf date: Date = Date()) -> Int {
+収支管理/AccountStore.swift:112:    func totalBalance(transactions: [Transaction], asOf date: Date = Date()) -> Int {
+収支管理/AccountsView.swift:8:    @EnvironmentObject var dataStore: DataStore
+収支管理/AccountsView.swift:279:            .environmentObject(DataStore.shared)
+収支管理/AppIntents.swift:27:        let transactions = DataStore.shared.transactionsForDate(Date())
+収支管理/AppIntents.swift:62:        let income = DataStore.shared.monthlyIncome(for: Date())
+収支管理/AppIntents.swift:63:        let expense = DataStore.shared.monthlyExpense(for: Date())
+収支管理/AppIntents.swift:112:        let cat = DataStore.shared.createCategoryIfNeeded(name: catName, type: .expense)
+収支管理/AppIntents.swift:113:        let tx = Transaction(
+収支管理/AppIntents.swift:118:            originalCategoryName: cat == nil ? catName : nil,
+収支管理/AppIntents.swift:121:        DataStore.shared.addTransaction(tx)
+収支管理/AppIntents.swift:169:        let cat = DataStore.shared.createCategoryIfNeeded(name: catName, type: .income)
+収支管理/AppIntents.swift:170:        let tx = Transaction(
+収支管理/AppIntents.swift:175:            originalCategoryName: cat == nil ? catName : nil,
+収支管理/AppIntents.swift:178:        DataStore.shared.addTransaction(tx)
+収支管理/AppSettings.swift:42:    @Published var enabledGraphTypes: Set<GraphType> {
+収支管理/AppSettings.swift:44:            let rawValues = enabledGraphTypes.map { $0.rawValue }
+収支管理/AppSettings.swift:45:            UserDefaults.standard.set(rawValues, forKey: "enabledGraphTypes")
+収支管理/AppSettings.swift:49:    @Published var graphTypeOrder: [GraphType] {
+収支管理/AppSettings.swift:86:        ?? Calendar.current.date(from: DateComponents(hour: 21, minute: 0)) ?? Date()
+収支管理/AppSettings.swift:88:        if let savedGraphTypes = UserDefaults.standard.array(forKey: "enabledGraphTypes") as? [String] {
+収支管理/AppSettings.swift:89:            self.enabledGraphTypes = Set(savedGraphTypes.compactMap { GraphType(rawValue: $0) })
+収支管理/AppSettings.swift:91:            self.enabledGraphTypes = Set(GraphType.allCases)
+収支管理/AppSettings.swift:95:            self.graphTypeOrder = savedOrder.compactMap { GraphType(rawValue: $0) }
+収支管理/AppSettings.swift:97:            self.graphTypeOrder = GraphType.allCases
+収支管理/AppSettings.swift:160:enum GraphType: String, CaseIterable, Identifiable {
+収支管理/AppTheme.swift:191:    /// Important action (save, confirm)
+収支管理/AppTheme.swift:453:    // MARK: - Transaction Types
+収支管理/AppTheme.swift:454:    struct TransactionTypes {
+収支管理/AppTheme.swift:495:        static let noTransactions = "取引がありません"
+収支管理/AppTheme.swift:554:    // MARK: - Graph Types
+収支管理/AppTheme.swift:555:    struct GraphTypes {
+収支管理/AppTheme.swift:556:        static let expenseCategory = "支出カテゴリ"
+収支管理/AppTheme.swift:557:        static let incomeCategory = "収入カテゴリ"
+収支管理/AppTheme.swift:565:    // MARK: - Receipt Scanner
+収支管理/AppTheme.swift:566:    struct ReceiptScanner {
+収支管理/AssetDashboardView.swift:5:    @EnvironmentObject var dataStore: DataStore
+収支管理/AssetDashboardView.swift:169:        let cal = Calendar.current
+収支管理/AssetDashboardView.swift:195:extension Calendar {
+収支管理/BackupPayload.swift:11:    let transactions: [Transaction]
+収支管理/BackupPayload.swift:12:    let expenseCategories: [Category] // 旧バハックアップ互換用（v3でも空配列等で維持、または階層化前データとして保持）
+収支管理/BackupPayload.swift:13:    let incomeCategories: [Category]  // 同上
+収支管理/BackupPayload.swift:19:    let classificationRules: [ClassificationRule]?
+収支管理/BackupPayload.swift:20:    let categoryGroups: [CategoryGroup]?
+収支管理/BackupPayload.swift:21:    let categoryItems: [CategoryItem]?
+収支管理/BackupPayload.swift:24:        transactions: [Transaction],
+収支管理/BackupPayload.swift:25:        expenseCategories: [Category],
+収支管理/BackupPayload.swift:26:        incomeCategories: [Category],
+収支管理/BackupPayload.swift:30:        classificationRules: [ClassificationRule]? = nil,
+収支管理/BackupPayload.swift:31:        categoryGroups: [CategoryGroup]? = nil,
+収支管理/BackupPayload.swift:32:        categoryItems: [CategoryItem]? = nil
+収支管理/BackupPayload.swift:42:        self.classificationRules = classificationRules
+収支管理/BackupPayload.swift:53:        transactions = try container.decode([Transaction].self, forKey: .transactions)
+収支管理/BackupPayload.swift:54:        expenseCategories = try container.decode([Category].self, forKey: .expenseCategories)
+収支管理/BackupPayload.swift:55:        incomeCategories = try container.decode([Category].self, forKey: .incomeCategories)
+収支管理/BackupPayload.swift:61:        classificationRules = try container.decodeIfPresent([ClassificationRule].self, forKey: .classificationRules)
+収支管理/BackupPayload.swift:62:        categoryGroups = try container.decodeIfPresent([CategoryGroup].self, forKey: .categoryGroups)
+収支管理/BackupPayload.swift:63:        categoryItems = try container.decodeIfPresent([CategoryItem].self, forKey: .categoryItems)
+収支管理/BackupPayload.swift:68:        case fixedCostTemplates, budgets, accounts, classificationRules
+収支管理/Budget.swift:10:    var originalCategoryName: String?
+収支管理/Budget.swift:19:        originalCategoryName: String? = nil,
+収支管理/Budget.swift:26:        self.originalCategoryName = originalCategoryName
+収支管理/Budget.swift:41:                 originalCategoryName = stringCat
+収支管理/Budget.swift:44:             originalCategoryName = try container.decodeIfPresent(String.self, forKey: .originalCategoryName)
+収支管理/Budget.swift:56:        try container.encodeIfPresent(originalCategoryName, forKey: .originalCategoryName)
+収支管理/Budget.swift:63:        case id, categoryId, category, originalCategoryName, amount, month, year
+収支管理/CSVDocumentPicker.swift:4:struct CSVDocumentPicker: UIViewControllerRepresentable {
+収支管理/CSVImportTypes.swift:4:// MARK: - CSV Import Types (single source of truth)
+収支管理/CSVImportTypes.swift:6:enum CSVImportFormat: String, CaseIterable, Identifiable {
+収支管理/CSVImportTypes.swift:18:        case .appExport: return "このアプリのCSV"
+収支管理/CSVImportTypes.swift:19:        case .resonaBank: return "りそな銀行CSV"
+収支管理/CSVImportTypes.swift:21:        case .payPay: return "PayPay CSV"
+収支管理/CSVImportTypes.swift:22:        case .bankGeneric: return "銀行CSV（汎用）"
+収支管理/CSVImportTypes.swift:23:        case .cardGeneric: return "クレカCSV（汎用）"
+収支管理/CSVImportTypes.swift:29:        case .appExport: return "このアプリでエクスポートしたCSV（ヘッダー: 日付,種類,金額,カテゴリ,メモ）"
+収支管理/CSVImportTypes.swift:30:        case .resonaBank: return "りそな銀行の入出金明細CSV"
+収支管理/CSVImportTypes.swift:31:        case .amazonCard: return "三井住友カード（Vpass）からダウンロードしたCSV"
+収支管理/CSVImportTypes.swift:32:        case .payPay: return "PayPayアプリからダウンロードしたCSV"
+収支管理/CSVImportTypes.swift:33:        case .bankGeneric: return "一般的な銀行の入出金明細CSV（日付, 入金, 出金など）"
+収支管理/CSVImportTypes.swift:34:        case .cardGeneric: return "一般的なクレジットカードの利用明細CSV"
+収支管理/CSVImportTypes.swift:39:struct CSVImportResult {
+収支管理/CSVImportTypes.swift:48:    var addedTransactionIds: [UUID]
+収支管理/CSVImportTypes.swift:63:        addedTransactionIds: [UUID] = [],
+収支管理/CSVImportTypes.swift:72:        self.addedTransactionIds = addedTransactionIds
+収支管理/CSVImportTypes.swift:93:struct CSVManualMapping: Codable, Hashable, Identifiable {
+収支管理/CSVImportTypes.swift:107:    static func template(for format: CSVImportFormat) -> CSVManualMapping {
+収支管理/CSVImportTypes.swift:108:        var m = CSVManualMapping()
+収支管理/CSVImportTypes.swift:128:// MARK: - CSV Parser
+収支管理/CSVImportTypes.swift:130:/// ダブルクォート対応の簡易CSVパーサ
+収支管理/CSVImportTypes.swift:131:enum CSVParser {
+収支管理/CSVImportTypes.swift:209:            df.calendar = Calendar(identifier: .gregorian)
+収支管理/CSVImportTypes.swift:250:// MARK: - Amazon Card CSV Detector

@@ -1,0 +1,14 @@
+Binary file ./収支管理.xcodeproj/project.xcworkspace/xcuserdata/shotaroihara.xcuserdatad/UserInterfaceState.xcuserstate matches
+./PROJECT_SPEC.md:36:  - `DataStore+SwiftData.swift` は「未統合のため UserDefaults 互換のダミー実装」を提供
+./PROJECT_SPEC.md:38:- 現状、CloudKit/iCloud 同期は未実装（クラウド保存はしていない）
+./PROJECT_SPEC.md:110:## 既知の制約・未実装
+./PROJECT_SPEC.md:113:- 一部の拡張（例: `keyboardToolbar`）やメソッド（例: 固定費の自動処理 `processFixedCosts`）は未実装/別途実装が必要
+./Docs/Audit/Phase4_CoreUX.md:87:- **論理削除の導入**: `Transactions` モデルに `isDeleted` フラグを追加（スキーマ変更伴うため慎重に）。Phase 8等の大規模改修で実施推奨。暫定としてUndo期間中の物理削除は維持しつつ、警告を強める等のUI対応を行う。
+./Docs/Audit/Logs/build.log:569:    construct-stub-executor-link-file-list /Users/shotaroihara/Library/Developer/Xcode/DerivedData/収支管理-bfefbrhqgfcutphijbthdignelwb/Build/Products/Debug-iphonesimulator/収支管理.app/収支管理.debug.dylib /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /Users/shotaroihara/Library/Developer/Xcode/DerivedData/収支管理-bfefbrhqgfcutphijbthdignelwb/Build/Intermediates.noindex/収支管理.build/Debug-iphonesimulator/収支管理.build/収支管理-ExecutorLinkFileList-normal-arm64.txt
+./Docs/Audit/Logs/build.log:570:note: Using stub executor library with Swift entry point. (in target '収支管理' from project '収支管理')
+./収支管理/WidgetViews.swift:243:    SmallWidgetView(entry: KakeiboWidgetEntry.placeholder)
+./収支管理/WidgetViews.swift:247:    MediumWidgetView(entry: KakeiboWidgetEntry.placeholder)
+./収支管理/WidgetViews.swift:251:    LargeWidgetView(entry: KakeiboWidgetEntry.placeholder)
+./収支管理/HierarchicalCategoryPicker.swift:78:            // バランスのためのダミー
+./収支管理/WidgetDataProvider.swift:125:    static var placeholder: KakeiboWidgetEntry {
+./収支管理/Diagnostics.swift:64:        // SwiftData Counts (placeholder for future)

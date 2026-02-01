@@ -1,0 +1,105 @@
+./Docs/Audit/Phase1_BuildRun.md:77:| 1 | `KakeiboApp.swift` | 38 | `fatalError("Unable to create any ModelContainer: \(error)")` | fatalError | **Critical** |
+./Docs/Audit/Phase1_BuildRun.md:103:        fatalError("Unable to create any ModelContainer: \(error)")
+./Docs/Audit/Phase1_BuildRun.md:218:収支管理/KakeiboApp.swift:38:            fatalError("Unable to create any ModelContainer: \(error)")
+./Docs/Audit/Phase2_Persistence.md:238:        fatalError("Unable to create any ModelContainer: \(error)")
+./Docs/Audit/Phase2_Persistence.md:365:        fatalError("Unable to create any ModelContainer: \(error)")
+./Docs/Audit/Logs/crash_risks_grep.txt:3:収支管理/KakeiboApp.swift:38:            fatalError("Unable to create any ModelContainer: \(error)")
+./Docs/Audit/Phase3_CSVImport.md:434:            return false
+./収支管理/CloudKitSyncManager.swift:11:        guard AppFeatureFlags.cloudSyncEnabled else { return nil }
+./収支管理/CloudKitSyncManager.swift:175:        guard AppFeatureFlags.cloudSyncEnabled else { return [] }
+./収支管理/CloudKitSyncManager.swift:176:        guard iCloudAvailable else { return [] }
+./収支管理/CloudKitSyncManager.swift:356:            return nil
+./収支管理/CSVImportWizardView.swift:452:        guard let catId = row.resolvedCategoryId else { return nil }
+./収支管理/ReceiptScannerView.swift:55:        guard let v = Int(trimmed), v > 0 else { return nil }
+./収支管理/ReceiptScannerView.swift:396:        guard let obj = Bundle.main.object(forInfoDictionaryKey: key) else { return false }
+./収支管理/ReceiptParser.swift:202:        return nil
+./収支管理/ReceiptParser.swift:223:        return false
+./収支管理/ReceiptParser.swift:232:        return false
+./収支管理/ReceiptParser.swift:260:        return nil
+./収支管理/ReceiptParser.swift:265:        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { return nil }
+./収支管理/ReceiptParser.swift:283:        return nil
+./収支管理/ReceiptParser.swift:292:        guard let regex = try? NSRegularExpression(pattern: amountPattern, options: []) else { return nil }
+./収支管理/ReceiptParser.swift:327:        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return nil }
+./収支管理/ReceiptParser.swift:350:        return nil
+./収支管理/HierarchicalCategoryPicker.swift:20:        guard let groupId = browsingGroupId else { return [] }
+./収支管理/HierarchicalCategoryPicker.swift:159:        guard let selectedId = selectedCategoryId else { return false }
+./収支管理/ClassificationRule.swift:67:        guard isEnabled, !keyword.isEmpty else { return false }
+./収支管理/ClassificationRule.swift:202:        guard !memo.isEmpty else { return nil }
+./収支管理/ClassificationRule.swift:217:            return nil
+./収支管理/ClassificationRule.swift:226:        return nil
+./収支管理/ClassificationRule.swift:236:        return nil
+./収支管理/ClassificationRule.swift:502:            return nil
+./収支管理/ClassificationRule.swift:648:        return nil
+./収支管理/Extensions.swift:256:        guard indices.contains(index) else { return nil }
+./収支管理/DataStore.swift:126:        guard let id = id else { return nil }
+./収支管理/DataStore.swift:422:            guard !$0.isDeleted else { return false }
+./収支管理/DataStore.swift:601:        guard let cat = expenseCategories.first(where: { $0.name == categoryName }) else { return nil }
+./収支管理/DataStore.swift:662:            if tx.isDeleted { return false }
+./収支管理/DataStore.swift:694:                if !matchesAll { return false }
+./収支管理/DataStore.swift:699:                return false
+./収支管理/DataStore.swift:705:                if tx.categoryId != nil { return false }
+./収支管理/DataStore.swift:708:                if tx.categoryId != cId { return false }
+./収支管理/DataStore.swift:713:                return false
+./収支管理/DataStore.swift:716:                return false
+./収支管理/DataStore.swift:722:                return false
+./収支管理/DataStore.swift:725:                return false
+./収支管理/DataStore.swift:743:            if !ids.contains(tx.id) { return false }
+./収支管理/DataStore.swift:837:        guard let data = try? JSONEncoder().encode(payload) else { return false }
+./収支管理/DataStore.swift:846:            return false
+./収支管理/DataStore.swift:1040:        guard zipData.count > 30, zipData[0] == 0x50, zipData[1] == 0x4B else { return nil }
+./収支管理/DataStore.swift:1046:        guard zipData.count >= headerEnd + Int(compressedSize) else { return nil }
+./収支管理/DataStore.swift:1602:        guard let raw = AmountParser.parse(amountStr) else { return nil }
+./収支管理/DataStore.swift:1612:        guard indices.contains(index) else { return nil }
+./収支管理/DataStore.swift:2033:        guard let context = modelContext else { return [] }
+./収支管理/DataStore.swift:2043:        return []
+./収支管理/DataStore.swift:2048:        guard let context = modelContext else { return nil }
+./収支管理/DataStore.swift:2056:        return nil
+./収支管理/DataStore.swift:2098:                return false
+./収支管理/DataStore.swift:2125:            return false
+./収支管理/DataStore.swift:2183:            return false
+./収支管理/DataStore.swift:2561:        return nil
+./収支管理/ImportDraftTypes.swift:558:        return nil
+./収支管理/ImportDraftTypes.swift:1011:        guard let raw = AmountParser.parse(amountStr) else { return nil }
+./収支管理/ImportDraftTypes.swift:1046:        guard indices.contains(index) else { return nil }
+./収支管理/Transaction.swift:124:              !source.isEmpty else { return nil }
+./収支管理/Transaction.swift:180:        return false
+./収支管理/Transaction.swift:197:        guard let accountId = accountId else { return nil }
+./収支管理/Transaction.swift:203:        guard let toAccountId = toAccountId else { return nil }
+./収支管理/TransferInputView.swift:28:              amount > 0 else { return false }
+./収支管理/TransferInputView.swift:29:        guard fromAccountId != nil, toAccountId != nil else { return false }
+./収支管理/TransferInputView.swift:30:        guard fromAccountId != toAccountId else { return false }
+./収支管理/CSVImportTypes.swift:192:        if t.isEmpty { return nil }
+./収支管理/CSVImportTypes.swift:213:        return nil
+./収支管理/CSVImportTypes.swift:229:        if t.isEmpty { return nil }
+./収支管理/CSVImportTypes.swift:245:        guard let n = Int(t) else { return nil }
+./収支管理/CSVImportTypes.swift:255:        guard !rows.isEmpty else { return false }
+./収支管理/CSVImportTypes.swift:292:        return false
+./収支管理/CSVImportTypes.swift:301:        return false
+./収支管理/CSVImportTypes.swift:314:        return false
+./収支管理/CSVImportTypes.swift:321:        guard let header = rows.first else { return false }
+./収支管理/CSVImportTypes.swift:330:        guard let header = rows.first else { return false }
+./収支管理/CSVImportTypes.swift:339:        return false
+./収支管理/CSVImportTypes.swift:369:            return nil
+./収支管理/CSVImportTypes.swift:414:        return nil
+./収支管理/CSVImportTypes.swift:430:        guard var amount = AmountParser.parse(amountStr) else { return nil }
+./収支管理/CSVImportTypes.swift:459:        guard let s = pickDate(from: row) else { return nil }
+./収支管理/CSVImportTypes.swift:470:        return nil
+./収支管理/CSVImportTypes.swift:474:        guard let i = amountIndex, let v = row[safe: i] else { return nil }
+./収支管理/CSVImportTypes.swift:479:        guard let i = typeIndex, let v = row[safe: i] else { return nil }
+./収支管理/CSVImportTypes.swift:523:        guard !rows.isEmpty else { return [] }
+./収支管理/CSVImportTypes.swift:562:        guard let header = rows.first else { return false }
+./収支管理/CSVImportTypes.swift:581:        guard rows.count > 0 else { return false }
+./収支管理/AccountStore.swift:42:        guard let id = id else { return nil }
+./収支管理/HierarchicalCategory.swift:210:        return nil
+./収支管理/KakeiboApp.swift:45:            fatalError("Unable to create any ModelContainer: \(error)")
+./収支管理/DataMigration.swift:233:        guard let models = try? context.fetch(descriptor) else { return [] }
+./収支管理/DataMigration.swift:239:        guard let models = try? context.fetch(descriptor) else { return [] }
+./収支管理/DataMigration.swift:245:        guard let models = try? context.fetch(descriptor) else { return [] }
+./収支管理/DataMigration.swift:251:        guard let models = try? context.fetch(descriptor) else { return [] }
+./収支管理/DataMigration.swift:257:        guard let models = try? context.fetch(descriptor) else { return [] }
+./収支管理/DataMigration.swift:263:        guard let models = try? context.fetch(descriptor) else { return [] }
+./収支管理/BackupPayload.swift:81:        return false
+./収支管理/InputView.swift:82:        if trimmed.isEmpty { return false }
+./収支管理/InputView.swift:88:        return false
+./収支管理/InputView.swift:99:            return nil
+./収支管理/InputView.swift:106:        return nil

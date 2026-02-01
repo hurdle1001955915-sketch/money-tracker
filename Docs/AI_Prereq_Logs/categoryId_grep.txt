@@ -1,0 +1,15 @@
+# categoryId/categoryID grep結果 (収支管理/収支管理/)
+# 主要な発見:
+# - Transaction.swift:37 - var categoryId: UUID?
+# - SwiftDataModels.swift:19 - var categoryId: UUID?
+# - DataStore.swift:57,91,109 - マイグレーション処理でcategoryId == nilをチェック
+# - GraphView.swift:39 - if let catId = tx.categoryId でグラフ集計
+# - 全ファイルでcategoryIdがUUID?型として使用されている
+
+# サンプル出力:
+Transaction.swift:37:    var categoryId: UUID?
+Transaction.swift:80:        categoryId: UUID? = nil,
+DataStore.swift:57:            if transactions[i].categoryId == nil, let originalName = transactions[i].originalCategoryName {
+DataStore.swift:59:                    transactions[i].categoryId = cat.id
+GraphView.swift:39:                if let catId = tx.categoryId {
+InputView.swift:32:    @State private var categoryId: UUID? = nil

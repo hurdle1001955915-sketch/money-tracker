@@ -1,0 +1,20 @@
+# 未分類関連キーワード grep結果 (収支管理/収支管理/)
+# 主要な発見:
+# - DataStore.swift:131 - guard let id = id else { return "未分類" }
+# - DataStore.swift:703-705 - filterByUncategorized で categoryId != nil { return false }
+# - DataStore.swift:740-745 - getUnclassifiedTransactions で categoryId == nil を抽出
+# - GraphView.swift:78 - // 3. 未分類 (categoryId == nil) コメント
+# - ImportDraftTypes.swift:24 - case unresolved // 未分類（要ユーザーアクション）
+
+# 結論: 未分類 = categoryId == nil（予約IDなし）
+
+# サンプル出力:
+DataStore.swift:131:        guard let id = id else { return "未分類" }
+DataStore.swift:703:            if filterByUncategorized {
+DataStore.swift:704:                // "未分類"を指定された場合
+DataStore.swift:705:                if tx.categoryId != nil { return false }
+DataStore.swift:744:            return tx.categoryId == nil
+GraphView.swift:78:            // 3. 未分類 (categoryId == nil)
+ImportDraftTypes.swift:24:    case unresolved         // 未分類（要ユーザーアクション）
+HierarchicalCategory.swift:144:        ("未分類", [
+HierarchicalCategory.swift:166:        ("未分類", [

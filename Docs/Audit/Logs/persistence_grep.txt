@@ -1,0 +1,50 @@
+収支管理/AccountStore.swift:5:#if canImport(SwiftData)
+収支管理/AccountStore.swift:6:import SwiftData
+収支管理/AccountStore.swift:17:    // SwiftData ModelContext - will be injected from App
+収支管理/AccountStore.swift:28:    /// ModelContextを注入してSwiftDataからデータをロード
+収支管理/AccountStore.swift:31:        loadAccountsFromSwiftData()
+収支管理/AccountStore.swift:50:        saveAccountToSwiftData(newAccount)
+収支管理/AccountStore.swift:56:            saveAccountToSwiftData(account)
+収支管理/AccountStore.swift:64:            saveAccountToSwiftData(accounts[idx])
+収支管理/AccountStore.swift:75:                saveAccountToSwiftData(accounts[idx])
+収支管理/AccountStore.swift:118:    // MARK: - SwiftData Operations
+収支管理/AccountStore.swift:120:    private func loadAccountsFromSwiftData() {
+収支管理/AccountStore.swift:130:            Diagnostics.shared.log("Loaded \(accounts.count) accounts from SwiftData", category: .swiftData)
+収支管理/AccountStore.swift:134:    private func saveAccountToSwiftData(_ account: Account) {
+収支管理/AccountStore.swift:158:            print("Failed to save account to SwiftData: \(error)")
+収支管理/AccountStore.swift:162:    private func saveAllAccountsToSwiftData() {
+収支管理/AccountStore.swift:164:            saveAccountToSwiftData(account)
+収支管理/AccountStore.swift:172:              let decoded = try? JSONDecoder().decode([Account].self, from: data) else {
+収支管理/AccountStore.swift:190:        saveAllAccountsToSwiftData()
+収支管理/AccountStore.swift:195:        deleteAllAccountsFromSwiftData()
+収支管理/AccountStore.swift:202:        deleteAllAccountsFromSwiftData()
+収支管理/AccountStore.swift:204:        saveAllAccountsToSwiftData()
+収支管理/AccountStore.swift:208:    private func deleteAllAccountsFromSwiftData() {
+収支管理/AppFeatureFlags.swift:6:    /// CloudKit同期機能の有効/無効
+収支管理/CSVImportTypes.swift:623:           let decoded = try? JSONDecoder().decode([CSVManualMapping].self, from: data) {
+収支管理/CSVImportTypes.swift:629:        if let encoded = try? JSONEncoder().encode(mappings) {
+収支管理/ClassificationRule.swift:419:              let decoded = try? JSONDecoder().decode([ClassificationRule].self, from: data) else {
+収支管理/ClassificationRule.swift:430:        guard let data = try? JSONEncoder().encode(rules) else { return }
+収支管理/CloudKitSyncManager.swift:2:import CloudKit
+収支管理/CloudKitSyncManager.swift:5:/// CloudKitを使用したiCloud同期マネージャー
+収支管理/CloudKitSyncManager.swift:7:final class CloudKitSyncManager: ObservableObject {
+収支管理/CloudKitSyncManager.swift:8:    static let shared = CloudKitSyncManager()
+収支管理/CloudKitSyncManager.swift:10:    private var container: CKContainer? {
+収支管理/CloudKitSyncManager.swift:12:        return CKContainer.default()
+収支管理/CloudKitSyncManager.swift:95:    /// 単一の取引をCloudKitにアップロード
+収支管理/CloudKitSyncManager.swift:104:    /// 複数の取引をCloudKitにアップロード
+収支管理/CloudKitSyncManager.swift:112:        // バッチ処理（CloudKitは一度に400件まで）
+収支管理/CloudKitSyncManager.swift:135:    /// 取引をCloudKitから削除
+収支管理/CloudKitSyncManager.swift:144:    /// 複数の取引をCloudKitから削除
+収支管理/CloudKitSyncManager.swift:173:    /// CloudKitから全ての取引を取得
+収支管理/CloudKitSyncManager.swift:233:    /// ローカルとCloudKitの完全同期
+収支管理/CloudKitSyncManager.swift:248:            // CloudKitから取得
+収支管理/CloudKitSyncManager.swift:424:    /// CloudKit変更通知のサブスクリプションを設定
+収支管理/DataMigration.swift:2:import SwiftData
+収支管理/DataMigration.swift:4:// MARK: - Data Migration (JSON Files → SwiftData)
+収支管理/DataMigration.swift:11:    /// JSONからSwiftDataへのマイグレーションを実行
+収支管理/DataMigration.swift:18:            Diagnostics.shared.log("SwiftData migration already completed", category: .migration)
+収支管理/DataMigration.swift:22:        Diagnostics.shared.log("Starting JSON → SwiftData migration...", category: .migration)
+収支管理/DataMigration.swift:48:            status.markJsonToSwiftDataMigrationCompleted(
+収支管理/DataMigration.swift:64:        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+収支管理/DataMigration.swift:93:              let transactions = try? JSONDecoder().decode([Transaction].self, from: data) else {

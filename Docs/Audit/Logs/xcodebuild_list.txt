@@ -1,0 +1,16 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -list
+
+Information about project "収支管理":
+    Targets:
+        収支管理
+
+    Build Configurations:
+        Debug
+        Release
+
+    If no build configuration is specified and -scheme is not passed then "Release" is used.
+
+    Schemes:
+        収支管理
+

@@ -1,0 +1,15 @@
+# CSVインポート関連 grep結果 (収支管理/収支管理/)
+# 主要な発見:
+# - ImportDraftTypes.swift:649-684 - parseCSVToDraftRows で全行をパース（上限なし）
+# - ImportDraftTypes.swift:493-495 - unresolvedCount は filter+count で動的計算
+# - ImportDraftTypes.swift:575-593 - unresolvedGroups でdescriptionごとにグループ化
+# - CSVImportWizardView.swift - ウィザードUIで未分類解決を実施
+
+# 結論: 行数制限なし、未分類件数はファイル依存で無制限
+
+# サンプル出力:
+ImportDraftTypes.swift:649:        for i in startIndex..<rows.count {
+ImportDraftTypes.swift:684:        draftRows = parsedRows
+ImportDraftTypes.swift:493:    var unresolvedCount: Int {
+ImportDraftTypes.swift:494:        draftRows.filter { $0.status == .unresolved }.count
+ImportDraftTypes.swift:495:    }

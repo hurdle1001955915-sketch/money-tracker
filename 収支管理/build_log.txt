@@ -1,0 +1,8 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -workspace 収支管理.xcodeproj/project.xcworkspace -scheme 収支管理 -configuration Debug -sdk iphonesimulator clean build
+
+Build settings from command line:
+    SDKROOT = iphonesimulator26.2
+
+2026-01-24 18:02:00.896 xcodebuild[10890:7496071] Writing error result bundle to /var/folders/q5/dxqqg7fs3nx1jfs8c7bp2ct00000gn/T/ResultBundle_2026-24-01_18-02-0000.xcresult
+xcodebuild: error: '収支管理.xcodeproj/project.xcworkspace' does not exist.

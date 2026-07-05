@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIと一緒に、本格iOSアプリを作ってみた</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+  :root {
+    --accent: #6C63FF;
+    --accent2: #00D2FF;
+    --accent-green: #00E676;
+    --accent-orange: #FF9100;
+    --bg-dark: #0a0a1a;
+    --bg-card: rgba(255,255,255,0.05);
+    --text-main: #f0f0f0;
+    --text-sub: #a0a0b0;
+  }
+
+  .reveal {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 400;
+    color: var(--text-main);
+  }
+
+  .reveal .slides {
+    text-align: left;
+  }
+
+  .reveal .slides section {
+    padding: 40px 60px;
+  }
+
+  .reveal h1, .reveal h2, .reveal h3 {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    color: var(--text-main);
+    text-transform: none;
+    letter-spacing: -0.02em;
+  }
+
+  .reveal h1 { font-size: 2.2em; line-height: 1.3; }
+  .reveal h2 { font-size: 1.6em; line-height: 1.3; margin-bottom: 0.5em; }
+  .reveal h3 { font-size: 1.1em; color: var(--accent2); font-weight: 500; }
+
+  .reveal p, .reveal li {
+    font-size: 0.72em;
+    line-height: 1.7;
+    color: var(--text-sub);
+  }
+
+  .reveal strong { color: var(--text-main); font-weight: 700; }
+
+  /* Title slide */
+  .title-slide { text-align: center !important; }
+  .title-slide h1 {
+    font-size: 2.4em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.3em;
+  }
+  .title-slide .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.0em;
+    color: var(--accent2);
+    letter-spacing: 0.05em;
+  }
+  .title-slide .presenter {
+    font-size: 0.7em;
+    color: var(--text-sub);
+    margin-top: 2em;
+  }
+
+  /* Stat badges */
+  .stats {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin: 1.5em 0;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--bg-card);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 12px;
+    padding: 16px 28px;
+    text-align: center;
+    min-width: 120px;
+  }
+  .stat .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6em;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+  }
+  .stat .label {
+    font-size: 0.6em;
+    color: var(--text-sub);
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* Feature grid */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 0.8em;
+  }
+  .feature-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 18px 20px;
+    transition: border-color 0.3s;
+  }
+  .feature-card:hover {
+    border-color: rgba(108,99,255,0.4);
+  }
+  .feature-card .icon {
+    font-size: 1.4em;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .feature-card .title {
+    font-size: 0.75em;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+  }
+  .feature-card .desc {
+    font-size: 0.58em;
+    color: var(--text-sub);
+    line-height: 1.5;
+  }
+
+  /* AI highlight card */
+  .ai-highlight {
+    background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(0,210,255,0.1));
+    border: 1px solid rgba(108,99,255,0.4);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin: 0.8em 0;
+  }
+  .ai-highlight .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 0.55em;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .ai-highlight .title {
+    font-size: 0.9em;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 8px;
+  }
+  .ai-highlight .desc {
+    font-size: 0.62em;
+    color: var(--text-sub);
+    line-height: 1.6;
+  }
+
+  /* Sub features list */
+  .sub-features {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .sub-feat {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .sub-feat .icon { font-size: 1.3em; display: block; margin-bottom: 6px; }
+  .sub-feat .name { font-size: 0.6em; font-weight: 500; color: var(--text-main); }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 1.2em 0;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    background: var(--bg-card);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 10px;
+    padding: 12px 18px;
+    text-align: center;
+    min-width: 100px;
+  }
+  .flow-step .step-icon { font-size: 1.2em; display: block; margin-bottom: 4px; }
+  .flow-step .step-text { font-size: 0.55em; color: var(--text-main); font-weight: 500; }
+  .flow-arrow {
+    font-size: 1.2em;
+    color: var(--accent);
+  }
+
+  /* Tool cards */
+  .tool-cards {
+    display: flex;
+    gap: 20px;
+    margin: 0.8em 0;
+  }
+  .tool-card {
+    flex: 1;
+    background: var(--bg-card);
+    border-radius: 14px;
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .tool-card.primary {
+    border-color: rgba(108,99,255,0.5);
+    background: linear-gradient(135deg, rgba(108,99,255,0.1), transparent);
+  }
+  .tool-card .tool-name {
+    font-size: 0.85em;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 8px;
+  }
+  .tool-card .tool-role {
+    font-size: 0.55em;
+    color: var(--accent2);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .tool-card .tool-desc {
+    font-size: 0.55em;
+    color: var(--text-sub);
+    line-height: 1.5;
+  }
+
+  /* Roadmap */
+  .roadmap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0.8em 0;
+  }
+  .roadmap-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .roadmap-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .roadmap-dot.ready { background: var(--accent-green); }
+  .roadmap-dot.planned { background: var(--accent-orange); }
+  .roadmap-dot.future { background: var(--accent); }
+  .roadmap-content {
+    flex: 1;
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: 14px 18px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .roadmap-content .r-title {
+    font-size: 0.7em;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+  .roadmap-content .r-desc {
+    font-size: 0.55em;
+    color: var(--text-sub);
+    margin-top: 2px;
+  }
+  .roadmap-content .r-status {
+    font-size: 0.5em;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .status-ready { color: var(--accent-green); }
+  .status-planned { color: var(--accent-orange); }
+  .status-future { color: var(--accent); }
+
+  /* Demo slide */
+  .demo-slide { text-align: center !important; }
+  .demo-slide h1 {
+    font-size: 3em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .demo-flow-list {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 1.5em;
+    flex-wrap: wrap;
+  }
+  .demo-item {
+    background: var(--bg-card);
+    border: 1px solid rgba(108,99,255,0.2);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 0.6em;
+    color: var(--text-sub);
+  }
+  .demo-item .demo-num {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+
+  /* Keyword highlight */
+  .hl { color: var(--accent); font-weight: 700; }
+  .hl2 { color: var(--accent2); font-weight: 700; }
+  .hl-green { color: var(--accent-green); font-weight: 700; }
+
+  /* Section label */
+  .section-label {
+    font-size: 0.5em;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.5em;
+  }
+
+  /* Quote */
+  .quote-box {
+    background: var(--bg-card);
+    border-left: 4px solid var(--accent);
+    padding: 16px 24px;
+    margin: 1em 0;
+    border-radius: 0 10px 10px 0;
+  }
+  .quote-box p {
+    font-size: 0.8em !important;
+    color: var(--text-main) !important;
+    font-style: italic;
+  }
+
+  /* Slide number */
+  .reveal .slide-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--text-sub);
+  }
+
+  /* Progress bar */
+  .reveal .progress span {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  /* CSV format badges */
+  .format-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .format-badge {
+    font-size: 0.5em;
+    background: rgba(0,210,255,0.15);
+    border: 1px solid rgba(0,210,255,0.3);
+    color: var(--accent2);
+    padding: 3px 10px;
+    border-radius: 16px;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- ====== SLIDE 1: TITLE ====== -->
+<section class="title-slide" data-background-color="#0a0a1a">
+  <h1>AIと一緒に、<br>本格iOSアプリを作ってみた</h1>
+  <p class="subtitle">収支管理アプリ "収支管理"</p>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="num">24,000+</span>
+      <span class="label">行のSwiftコード</span>
+    </div>
+    <div class="stat">
+      <span class="num">62</span>
+      <span class="label">ファイル</span>
+    </div>
+    <div class="stat">
+      <span class="num">2-3</span>
+      <span class="label">週間で開発</span>
+    </div>
+    <div class="stat">
+      <span class="num">1</span>
+      <span class="label">人で開発</span>
+    </div>
+  </div>
+
+  <p class="presenter">2026.03.04 | 井原 翔太郎</p>
+</section>
+
+<!-- ====== SLIDE 2: WHY ====== -->
+<section data-background-color="#0a0a1a">
+  <div class="section-label">Motivation</div>
+  <h2>なぜ作ったのか</h2>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="icon">😤</span>
+      <div class="title">既存アプリへの不満</div>
+      <div class="desc">機能が多すぎて複雑 or シンプルすぎて物足りない。広告も気になる。</div>
+    </div>
+    <div class="feature-card">
+      <span class="icon">🔒</span>
+      <div class="title">プライバシーの不安</div>
+      <div class="desc">金融データを外部サービスに預けることへの懸念。ローカル管理したい。</div>
+    </div>
+    <div class="feature-card">
+      <span class="icon">🏦</span>
+      <div class="title">自分のサービスに対応</div>
+      <div class="desc">PayPay、りそな銀行、AmazonカードのCSVをちゃんと読み込みたい。</div>
+    </div>
+    <div class="feature-card">
+      <span class="icon">🤖</span>
+      <div class="title">純粋な技術的好奇心</div>
+      <div class="desc">「AIで本格アプリが作れるのか？」Vibe Codingの可能性を検証したかった。</div>
+    </div>
+  </div>
+
+  <div class="quote-box">
+    <p>「自分が毎日使いたいアプリを、自分で作る」</p>
+  </div>
+</section>
+
+<!-- ====== SLIDE 3: CORE FEATURES ====== -->
+<section data-background-color="#0a0a1a">
+  <div class="section-label">Core Features</div>
+  <h2>基本機能</h2>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="icon">🧮</span>
+      <div class="title">取引入力</div>
+      <div class="desc">電卓式の金額入力。よく使うカテゴリが上位表示。レシートOCR読取にも対応。</div>
+    </div>
+    <div class="feature-card">
+      <span class="icon">📅</span>
+      <div class="title">カレンダー</div>
+      <div class="desc">月間カレンダーで日ごとの収支を一覧表示。タップで日別明細を確認。</div>
+    </div>
+    <div class="feature-card">
+      <span class="icon">📊</span>
+      <div class="title">7種類のグラフ</div>
+      <div class="desc">円グラフ、棒グラフ、折れ線、予算進捗、貯蓄推移。スワイプで切替。</div>
+    </div>
+    <div class="feature-card">
+      <span class="icon">💰</span>
+      <div class="title">資産ダッシュボード</div>
+      <div class="desc">総資産額、口座別ポートフォリオ配分、6ヶ月の資産推移チャート。</div>
+    </div>
+    <div class="feature-card">
+      <span class="icon">🏧</span>
+      <div class="title">6種類の口座管理</div>
+      <div class="desc">銀行・クレジットカード・電子マネー・現金・投資・その他を一元管理。</div>
+    </div>
+    <div class="feature-card">
+      <span class="icon">📋</span>
+      <div class="title">予算 & 固定費</div>
+      <div class="desc">月間予算をカテゴリ別に設定。家賃・光熱費など固定費テンプレートで自動入力。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SLIDE 4: AI & ADVANCED ====== -->
+<section data-background-color="#0a0a1a">
+  <div class="section-label">AI & Advanced</div>
+  <h2>AI & 高度な機能</h2>
+
+  <div class="ai-highlight">
+    <span class="badge">AI-Powered</span>
+    <div class="title">自動カテゴリ分類</div>
+    <div class="desc">
+      OpenAI <span class="hl">GPT-4o-mini</span> が取引の説明文を分析し、カテゴリを自動判定。<br>
+      信頼度スコア <span class="hl2">80%以上で自動確定</span>。分類の理由も日本語で表示。<br>
+      25件ずつバッチ処理 / 学習ヒント対応 / 構造化JSON出力
+    </div>
+  </div>
+
+  <div class="ai-highlight" style="border-color: rgba(0,210,255,0.4); background: linear-gradient(135deg, rgba(0,210,255,0.1), transparent);">
+    <span class="badge" style="background: var(--accent2);">Smart Import</span>
+    <div class="title">マルチフォーマットCSVインポート</div>
+    <div class="desc">
+      <span class="hl2">6フォーマット</span>を自動判定。文字コード自動検出（UTF-8 / Shift_JIS / EUC-JP等）。<br>
+      重複検出 / ウィザード形式UI / インポート履歴 & 一括取消
+    </div>
+    <div class="format-badges">
+      <span class="format-badge">PayPay</span>
+      <span class="format-badge">りそな銀行</span>
+      <span class="format-badge">Amazonカード</span>
+      <span class="format-badge">汎用銀行</span>
+      <span class="format-badge">汎用カード</span>
+      <span class="format-badge">アプリ書出</span>
+    </div>
+  </div>
+
+  <div class="sub-features">
+    <div class="sub-feat">
+      <span class="icon">📷</span>
+      <span class="name">レシートOCR</span>
+    </div>
+    <div class="sub-feat">
+      <span class="icon">🔐</span>
+      <span class="name">Face ID / Touch ID</span>
+    </div>
+    <div class="sub-feat">
+      <span class="icon">☁️</span>
+      <span class="name">iCloud同期（準備済）</span>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SLIDE 5: HOW ====== -->
+<section data-background-color="#0a0a1a">
+  <div class="section-label">Vibe Coding</div>
+  <h2>どうやって作ったのか</h2>
+
+  <div class="tool-cards">
+    <div class="tool-card primary">
+      <div class="tool-name">Claude Code</div>
+      <div class="tool-role">メイン開発パートナー</div>
+      <div class="tool-desc">
+        Anthropic社のAIコーディングツール。<br>
+        日本語で指示 → コード生成・設計・テスト・リファクタリングまで対応。<br>
+        <strong>24,000行の大半をClaude Codeで生成。</strong>
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-name">Google AI</div>
+      <div class="tool-role">セカンダリツール</div>
+      <div class="tool-desc">
+        設計の壁打ち・UIレビュー・<br>
+        アーキテクチャ相談に活用。
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 0.8em;">開発フロー</h3>
+  <div class="flow">
+    <div class="flow-step">
+      <span class="step-icon">💬</span>
+      <span class="step-text">日本語で要件</span>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">
+      <span class="step-icon">🤖</span>
+      <span class="step-text">AIがコード生成</span>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">
+      <span class="step-icon">🔨</span>
+      <span class="step-text">Xcodeでビルド</span>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">
+      <span class="step-icon">🔄</span>
+      <span class="step-text">フィードバック</span>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">
+      <span class="step-icon">✅</span>
+      <span class="step-text">完成</span>
+    </div>
+  </div>
+
+  <div class="quote-box">
+    <p>「何を作りたいかを的確に伝える力」+「基礎知識」= <span class="hl">Vibe Coding</span></p>
+  </div>
+</section>
+
+<!-- ====== SLIDE 6: FUTURE ====== -->
+<section data-background-color="#0a0a1a">
+  <div class="section-label">Roadmap</div>
+  <h2>今後の計画</h2>
+
+  <div class="roadmap">
+    <div class="roadmap-item">
+      <div class="roadmap-dot ready"></div>
+      <div class="roadmap-content">
+        <div class="r-title">iCloud同期の有効化</div>
+        <div class="r-desc">CloudKitインフラは構築済み。テスト後にフラグONで稼働開始。</div>
+        <div class="r-status status-ready">インフラ構築済み</div>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-dot ready"></div>
+      <div class="roadmap-content">
+        <div class="r-title">SwiftData完全移行</div>
+        <div class="r-desc">現在のUserDefaultsから、Apple標準のSwiftDataに切り替え。</div>
+        <div class="r-status status-ready">モデル定義済み</div>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-dot planned"></div>
+      <div class="roadmap-content">
+        <div class="r-title">ウィジェット & iPad対応</div>
+        <div class="r-desc">ホーム画面ウィジェットで今月の収支をさっと確認。iPad対応も視野に。</div>
+        <div class="r-status status-planned">ファイル準備済み</div>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-dot future"></div>
+      <div class="roadmap-content">
+        <div class="r-title">App Store公開</div>
+        <div class="r-desc">社内ベータテスト → TestFlight → 一般公開を検討中。</div>
+        <div class="r-status status-future">検討中</div>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-dot future"></div>
+      <div class="roadmap-content">
+        <div class="r-title">AI支出分析 & 節約アドバイス</div>
+        <div class="r-desc">支出パターンの予測、「先月より外食増えてます」等の自動アドバイス。</div>
+        <div class="r-status status-future">構想中</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SLIDE 7: DEMO ====== -->
+<section class="demo-slide" data-background-color="#0a0a1a">
+  <h1>Live Demo</h1>
+  <p style="font-size: 1.0em; color: var(--text-sub);">iPhone画面を共有します</p>
+
+  <div class="demo-flow-list">
+    <div class="demo-item"><span class="demo-num">01</span>Face ID解除</div>
+    <div class="demo-item"><span class="demo-num">02</span>取引入力</div>
+    <div class="demo-item"><span class="demo-num">03</span>カレンダー</div>
+    <div class="demo-item"><span class="demo-num">04</span>グラフ 7種</div>
+    <div class="demo-item"><span class="demo-num">05</span>資産ダッシュボード</div>
+    <div class="demo-item"><span class="demo-num">06</span>CSV AI分類</div>
+  </div>
+
+  <p style="margin-top: 2em; font-size: 0.65em; color: var(--accent2);">
+    ご質問はデモ後にお願いします
+  </p>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    showSlideNumber: 'all',
+    width: 1280,
+    height: 720,
+    margin: 0.04,
+    transition: 'slide',
+    transitionSpeed: 'default',
+    backgroundTransition: 'fade',
+    center: false,
+    controls: true,
+    progress: true,
+    history: true,
+  });
+</script>
+</body>
+</html>

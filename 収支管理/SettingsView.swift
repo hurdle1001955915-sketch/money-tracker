@@ -261,6 +261,15 @@ struct SettingsView: View {
         }
     }
     
+    private var unprocessedFixedCostCount: Int {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM"
+        let currentMonth = formatter.string(from: Date())
+        return dataStore.fixedCostTemplates
+            .filter { $0.isEnabled && $0.lastProcessedMonth != currentMonth }
+            .count
+    }
+
     private var categorySection: some View {
         Section("カテゴリーと固定費") {
             NavigationLink {
@@ -276,7 +285,22 @@ struct SettingsView: View {
             NavigationLink {
                 FixedCostSettingView()
             } label: {
-                SettingRow(title: "固定費・定期収入")
+                HStack {
+                    Text("固定費・定期収入")
+                    Spacer()
+                    if unprocessedFixedCostCount > 0 {
+                        ZStack {
+                            Circle()
+                                .fill(.red)
+                                .frame(width: 20, height: 20)
+                            Text("\(unprocessedFixedCostCount)")
+                                .font(.caption2)
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
             NavigationLink {
                 ClassificationRulesView()
@@ -308,8 +332,6 @@ struct SettingsView: View {
     
     private var dataManagementSection: some View {
         Section("データ管理") {
-            backupButton
-            restoreButton
             exportButton
             importButton
             importHistoryButton
@@ -367,9 +389,9 @@ struct SettingsView: View {
                 .contentShape(Rectangle())
             }
         } header: {
-            Text("ZIPバックアップ")
+            Text("バックアップ")
         } footer: {
-            Text("データをZIPファイルとしてFilesアプリに保存・復元できます。機種変更時のデータ移行に便利です。")
+            Text("全データをZIPファイルとしてFilesアプリに保存・復元します。機種変更時のデータ移行や、万が一のデータ消失に備えて定期的にバックアップしてください。")
         }
     }
 

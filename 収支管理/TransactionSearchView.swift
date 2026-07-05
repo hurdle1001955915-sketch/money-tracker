@@ -174,24 +174,16 @@ struct TransactionSearchView: View {
     
     private var emptyResultsSection: some View {
         Section {
-            VStack(spacing: 12) {
-                Image(systemName: "doc.text.magnifyingglass")
-                .font(.largeTitle)
-                .foregroundStyle(.secondary)
-            Text("一致する取引がありません")
-                .foregroundStyle(.secondary)
-            
-            if hasActiveFilters {
-                Button("フィルタをクリア") {
-                    clearFilters()
-                }
-                .font(.subheadline)
+            EmptyStateView(
+                icon: "doc.text.magnifyingglass",
+                title: "一致する取引がありません",
+                actionTitle: hasActiveFilters ? "フィルタをクリア" : nil
+            ) {
+                clearFilters()
             }
+            .padding(.vertical, 40)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
     }
-}
 
 private var resultsSection: some View {
     Section {
@@ -306,7 +298,8 @@ private var activeFiltersBar: some View {
                 clearFilters()
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .fontWeight(.semibold)
+            .foregroundStyle(.red)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
@@ -378,9 +371,7 @@ private struct FilterSheet: View {
     
     @State private var showDateFromPicker = false
     @State private var showDateToPicker = false
-    @State private var tempDateFrom: Date = Date()
-    @State private var tempDateTo: Date = Date()
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -393,84 +384,31 @@ private struct FilterSheet: View {
                     }
                     .pickerStyle(.segmented)
                 }
-                
+
                 // カテゴリ
                 Section("カテゴリ") {
                     Picker("カテゴリ", selection: $selectedCategoryId) {
                         Text("すべて").tag(UUID?.none)
-                        
-                        // 「未分類」の選択（BindingのcategoryIdをnilにしつつ、別のフラグを立てるか、
-                        // あるいは sentinel ID を使うなどの工夫が必要だが、ここではシンプルに
-                        // selectedCategoryIdをnilにし、filterByUncategorizedをtrueにするロジックをOnChangeで組む）
+
                         Text("未分類").tag(UUID?.none)
-                        
+
                         ForEach(allCategories) { cat in
                             Text(cat.name).tag(UUID?.some(cat.id))
                         }
                     }
                     .onChange(of: selectedCategoryId) { old, new in
-                        // もし「すべて」または「未分類」が選ばれた場合（new == nil）
-                        // どっちなのかを判定する必要があるが、標準Picker+tag(nil)だと区別がつかない。
-                        // そのため、Pickerの構成を変えるか、専用のToggleを設けるなどの対応が望ましいが、
-                        // 簡便には、特定のUUID(sentinel)を「未分類」に割り当てる。
                     }
-                    
+
                     Toggle("未分類のみ表示", isOn: $filterByUncategorized)
                         .font(.subheadline)
                         .onChange(of: filterByUncategorized) { _, newValue in
                             if newValue { selectedCategoryId = nil }
                         }
                 }
-                
+
                 // 期間
                 Section("期間") {
-                    HStack {
-                        Text("開始日")
-                        Spacer()
-                        if let from = dateFrom {
-                            Button(from.shortDateString) {
-                                tempDateFrom = from
-                                showDateFromPicker = true
-                            }
-                            Button {
-                                dateFrom = nil
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.secondary)
-                            }
-                        } else {
-                            Button("指定なし") {
-                                tempDateFrom = Date()
-                                showDateFromPicker = true
-                            }
-                            .foregroundStyle(.secondary)
-                        }
-                    }
-                    
-                    HStack {
-                        Text("終了日")
-                        Spacer()
-                        if let to = dateTo {
-                            Button(to.shortDateString) {
-                                tempDateTo = to
-                                showDateToPicker = true
-                            }
-                            Button {
-                                dateTo = nil
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.secondary)
-                            }
-                        } else {
-                            Button("指定なし") {
-                                tempDateTo = Date()
-                                showDateToPicker = true
-                            }
-                            .foregroundStyle(.secondary)
-                        }
-                    }
-                    
-                    // クイック選択
+                    // クイック選択（上部に配置して目立たせる）
                     HStack(spacing: 8) {
                         QuickDateButton(label: "今月") {
                             dateFrom = Date().startOfMonth
@@ -485,9 +423,83 @@ private struct FilterSheet: View {
                             dateFrom = Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date()
                             dateTo = Date()
                         }
+                        QuickDateButton(label: "今年") {
+                            let year = Calendar.current.component(.year, from: Date())
+                            dateFrom = Calendar.current.date(from: DateComponents(year: year, month: 1, day: 1))
+                            dateTo = Date()
+                        }
+                    }
+                    .padding(.vertical, 4)
+
+                    // 開始日
+                    DisclosureGroup(isExpanded: $showDateFromPicker) {
+                        DatePicker(
+                            "開始日",
+                            selection: Binding(
+                                get: { dateFrom ?? Date() },
+                                set: { dateFrom = $0 }
+                            ),
+                            displayedComponents: .date
+                        )
+                        .datePickerStyle(.graphical)
+                        .environment(\.locale, Locale(identifier: "ja_JP"))
+                    } label: {
+                        HStack {
+                            Text("開始日")
+                            Spacer()
+                            if let from = dateFrom {
+                                Text(from.shortDateString)
+                                    .foregroundStyle(Color.themeBlue)
+                                Button {
+                                    dateFrom = nil
+                                    showDateFromPicker = false
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                Text("指定なし")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    // 終了日
+                    DisclosureGroup(isExpanded: $showDateToPicker) {
+                        DatePicker(
+                            "終了日",
+                            selection: Binding(
+                                get: { dateTo ?? Date() },
+                                set: { dateTo = $0 }
+                            ),
+                            displayedComponents: .date
+                        )
+                        .datePickerStyle(.graphical)
+                        .environment(\.locale, Locale(identifier: "ja_JP"))
+                    } label: {
+                        HStack {
+                            Text("終了日")
+                            Spacer()
+                            if let to = dateTo {
+                                Text(to.shortDateString)
+                                    .foregroundStyle(Color.themeBlue)
+                                Button {
+                                    dateTo = nil
+                                    showDateToPicker = false
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                Text("指定なし")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
                 }
-                
+
                 // 金額
                 Section("金額範囲") {
                     HStack {
@@ -501,7 +513,7 @@ private struct FilterSheet: View {
                         Text("円")
                     }
                 }
-                
+
                 // クリア
                 Section {
                     Button("すべてクリア") {
@@ -514,6 +526,8 @@ private struct FilterSheet: View {
                         amountMaxText = ""
                     }
                     .foregroundStyle(.red)
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
             .navigationTitle("フィルタ")
@@ -523,49 +537,8 @@ private struct FilterSheet: View {
                     Button("完了") { dismiss() }
                 }
             }
-            .sheet(isPresented: $showDateFromPicker) {
-                DatePickerSheet(date: $tempDateFrom, title: "開始日") {
-                    dateFrom = tempDateFrom
-                }
-            }
-            .sheet(isPresented: $showDateToPicker) {
-                DatePickerSheet(date: $tempDateTo, title: "終了日") {
-                    dateTo = tempDateTo
-                }
-            }
         }
         .presentationDetents([.medium, .large])
-    }
-}
-
-// MARK: - Date Picker Sheet
-
-private struct DatePickerSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var date: Date
-    let title: String
-    let onConfirm: () -> Void
-    
-    var body: some View {
-        NavigationStack {
-            DatePicker("", selection: $date, displayedComponents: .date)
-                .datePickerStyle(.graphical)
-                .padding()
-                .navigationTitle(title)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button("キャンセル") { dismiss() }
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("決定") {
-                            onConfirm()
-                            dismiss()
-                        }
-                    }
-                }
-        }
-        .presentationDetents([.medium])
     }
 }
 

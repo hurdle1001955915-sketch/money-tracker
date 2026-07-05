@@ -5,7 +5,8 @@ struct AccountDetailView: View {
     let account: Account
     @EnvironmentObject var dataStore: DataStore
     @StateObject private var accountStore = AccountStore.shared
-    
+    @State private var showEditSheet = false
+
     var body: some View {
         List {
             // 残高サマリー
@@ -29,8 +30,10 @@ struct AccountDetailView: View {
                 let trendData = calculateAccountTrend()
                 
                 if trendData.isEmpty {
-                    Text("データがありません")
-                        .foregroundStyle(.secondary)
+                    EmptyStateView(
+                        icon: "chart.line.uptrend.xyaxis",
+                        title: "データがありません"
+                    )
                 } else {
                     Chart(trendData) { data in
                         LineMark(
@@ -57,8 +60,10 @@ struct AccountDetailView: View {
                 }.sorted { $0.date > $1.date }
                 
                 if txs.isEmpty {
-                    Text("取引履歴はありません")
-                        .foregroundStyle(.secondary)
+                    EmptyStateView(
+                        icon: "list.bullet",
+                        title: "取引履歴はありません"
+                    )
                 } else {
                     ForEach(txs.prefix(50)) { tx in
                         TransactionRow(tx: tx, dataStore: dataStore)
@@ -68,6 +73,18 @@ struct AccountDetailView: View {
         }
         .navigationTitle(account.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showEditSheet = true
+                } label: {
+                    Text("編集")
+                }
+            }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            AccountEditView(account: account)
+        }
     }
     
     // MARK: - Helper

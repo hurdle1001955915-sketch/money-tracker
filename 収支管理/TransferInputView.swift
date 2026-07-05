@@ -23,9 +23,12 @@ struct TransferInputView: View {
     
     private var isEditing: Bool { editingTransaction != nil }
     
+    private var parsedAmount: Int? {
+        evaluateAmountExpression(amountText)
+    }
+
     private var isValid: Bool {
-        guard let amount = Int(amountText.replacingOccurrences(of: ",", with: "")),
-              amount > 0 else { return false }
+        guard let amount = parsedAmount, amount > 0 else { return false }
         guard fromAccountId != nil, toAccountId != nil else { return false }
         guard fromAccountId != toAccountId else { return false }
         return true
@@ -36,9 +39,113 @@ struct TransferInputView: View {
         self.onSave = onSave
     }
     
+    // MARK: - Transfer Visual Header
+
+    private var fromAccount: Account? {
+        guard let id = fromAccountId else { return nil }
+        return accountStore.account(for: id)
+    }
+
+    private var toAccount: Account? {
+        guard let id = toAccountId else { return nil }
+        return accountStore.account(for: id)
+    }
+
+    @ViewBuilder
+    private var transferVisualHeader: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                // From account
+                transferAccountBubble(
+                    name: fromAccount?.name ?? "振替元",
+                    color: fromAccount?.color ?? Color.gray.opacity(0.4),
+                    balance: fromAccountId.map { accountStore.balance(for: $0, transactions: dataStore.transactions) },
+                    isPlaceholder: fromAccount == nil
+                )
+
+                Spacer()
+
+                // Arrow
+                VStack(spacing: 4) {
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(Color.themeBlue)
+
+                    if let amount = parsedAmount, amount > 0 {
+                        Text("\(amount.currencyFormatted)")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color.themeBlue)
+                    }
+                }
+                .padding(.horizontal, 8)
+
+                Spacer()
+
+                // To account
+                transferAccountBubble(
+                    name: toAccount?.name ?? "振替先",
+                    color: toAccount?.color ?? Color.gray.opacity(0.4),
+                    balance: toAccountId.map { accountStore.balance(for: $0, transactions: dataStore.transactions) },
+                    isPlaceholder: toAccount == nil
+                )
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 20)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .listRowInsets(EdgeInsets())
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+    }
+
+    @ViewBuilder
+    private func transferAccountBubble(name: String, color: Color, balance: Int?, isPlaceholder: Bool) -> some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(isPlaceholder ? 0.3 : 0.15))
+                    .frame(width: 56, height: 56)
+
+                Circle()
+                    .stroke(color.opacity(isPlaceholder ? 0.3 : 0.6), lineWidth: 2)
+                    .frame(width: 56, height: 56)
+
+                Image(systemName: isPlaceholder ? "questionmark" : "building.columns.fill")
+                    .font(.system(size: 22))
+                    .foregroundStyle(color.opacity(isPlaceholder ? 0.4 : 0.8))
+            }
+
+            Text(name)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(isPlaceholder ? Color.secondary : Color.primary)
+                .lineLimit(1)
+                .frame(maxWidth: 110)
+
+            if let balance = balance {
+                Text(balance.currencyFormatted)
+                    .font(.caption2)
+                    .foregroundStyle(balance >= 0 ? Color.secondary : Color.red)
+            }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
+                // 振替ビジュアルヘッダー
+                Section {
+                    transferVisualHeader
+                }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+
                 // 日付
                 Section("日付") {
                     Button {
@@ -136,6 +243,7 @@ struct TransferInputView: View {
                 // メモ
                 Section("メモ") {
                     TextField("メモ（任意）", text: $memo)
+                        .textInputAutocapitalization(.never)
                 }
                 
                 // プレビュー
@@ -226,8 +334,7 @@ struct TransferInputView: View {
     }
     
     private func save() {
-        guard let amount = Int(amountText.replacingOccurrences(of: ",", with: "")),
-              amount > 0 else {
+        guard let amount = parsedAmount, amount > 0 else {
             validationMessage = "金額を正しく入力してください"
             showValidationError = true
             return

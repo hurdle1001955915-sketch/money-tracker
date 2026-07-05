@@ -1,6 +1,15 @@
 import SwiftUI
 import WidgetKit
 
+// MARK: - Deep Link URLs
+
+enum WidgetDeepLink {
+    static let scheme = "kakeibo"
+
+    static let inputTab = URL(string: "\(scheme)://widget/input")!
+    static let calendarTab = URL(string: "\(scheme)://widget/calendar")!
+}
+
 // MARK: - Widget Views
 
 /// 小サイズウィジェット - 今日の支出
@@ -32,11 +41,12 @@ struct SmallWidgetView: View {
                 .foregroundStyle(.secondary)
         }
         .padding()
+        .widgetURL(WidgetDeepLink.inputTab)
         .containerBackground(for: .widget) {
             Color(.systemBackground)
         }
     }
-    
+
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ja_JP")
@@ -119,6 +129,7 @@ struct MediumWidgetView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding()
+        .widgetURL(WidgetDeepLink.calendarTab)
         .containerBackground(for: .widget) {
             Color(.systemBackground)
         }
@@ -195,23 +206,26 @@ struct LargeWidgetView: View {
             } else {
                 VStack(spacing: 6) {
                     ForEach(entry.data.recentTransactions.prefix(4)) { tx in
-                        HStack {
-                            Text(tx.category)
-                                .font(.caption)
-                                .lineLimit(1)
-                            Spacer()
-                            Text(tx.amount.currencyFormattedWidget)
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundStyle(tx.isExpense ? Color(UIColor.systemRed) : Color(UIColor.systemBlue))
+                        Link(destination: WidgetDeepLink.calendarTab) {
+                            HStack {
+                                Text(tx.category)
+                                    .font(.caption)
+                                    .lineLimit(1)
+                                Spacer()
+                                Text(tx.amount.currencyFormattedWidget)
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(tx.isExpense ? Color(UIColor.systemRed) : Color(UIColor.systemBlue))
+                            }
                         }
                     }
                 }
             }
-            
+
             Spacer()
         }
         .padding()
+        .widgetURL(WidgetDeepLink.calendarTab)
         .containerBackground(for: .widget) {
             Color(.systemBackground)
         }

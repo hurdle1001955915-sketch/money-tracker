@@ -2848,6 +2848,119 @@ extension DataStore {
         }
         return nil
     }
+
+    // MARK: - Data Integrity Validation & Repair
+
+    /// データ整合性チェックの結果
+    struct DataIntegrityReport {
+        /// transferIdが存在するがペアが見つからない孤立振替取引のID
+        let orphanedTransferIds: [UUID]
+        /// parentIdが存在するが親取引が見つからない分割取引のID
+        let invalidParentIds: [UUID]
+        /// categoryIdが存在するが該当カテゴリが見つからない取引のID
+        let invalidCategoryIds: [UUID]
+
+        /// 問題のある取引の合計数
+        var totalIssues: Int {
+            orphanedTransferIds.count + invalidParentIds.count + invalidCategoryIds.count
+        }
+
+        /// 問題がないかどうか
+        var isClean: Bool { totalIssues == 0 }
+    }
+
+    /// データ整合性を検証し、問題のサマリーを返す
+    func validateDataIntegrity() -> DataIntegrityReport {
+        let activeTransactions = transactions.filter { !$0.isDeleted }
+        let activeIds = Set(activeTransactions.map { $0.id })
+        let validCategoryIds = Set(categoryItems.map { $0.id })
+
+        // 1. 孤立した振替取引を検出
+        //    transferIdを持つ取引について、同じtransferIdを持つペアが2件未満のものを検出
+        var transferIdCounts: [String: [UUID]] = [:]
+        for tx in activeTransactions where tx.transferId != nil {
+            transferIdCounts[tx.transferId!, default: []].append(tx.id)
+        }
+        let orphanedTransferIds = transferIdCounts
+            .filter { $0.value.count < 2 }
+            .flatMap { $0.value }
+
+        // 2. 無効なparentIdを持つ分割取引を検出
+        let invalidParentIds = activeTransactions
+            .filter { $0.parentId != nil && !activeIds.contains($0.parentId!) }
+            .map { $0.id }
+
+        // 3. 存在しないカテゴリIDを参照する取引を検出
+        let invalidCategoryIds = activeTransactions
+            .filter { $0.categoryId != nil && !validCategoryIds.contains($0.categoryId!) }
+            .map { $0.id }
+
+        return DataIntegrityReport(
+            orphanedTransferIds: orphanedTransferIds,
+            invalidParentIds: invalidParentIds,
+            invalidCategoryIds: invalidCategoryIds
+        )
+    }
+
+    /// データ整合性の問題を修復する
+    /// - Returns: 修復されたレポート（修復前の状態）
+    @discardableResult
+    func repairDataIntegrity() -> DataIntegrityReport {
+        let report = validateDataIntegrity()
+
+        guard !report.isClean else { return report }
+
+        var changed = false
+
+        // 1. 孤立した振替取引を通常の支出に変換
+        let orphanedSet = Set(report.orphanedTransferIds)
+        if !orphanedSet.isEmpty {
+            for i in transactions.indices where orphanedSet.contains(transactions[i].id) {
+                transactions[i].type = .expense
+                transactions[i].transferId = nil
+                transactions[i].toAccountId = nil
+                changed = true
+            }
+            Diagnostics.shared.log(
+                "Repaired \(orphanedSet.count) orphaned transfer transaction(s)",
+                category: .migration
+            )
+        }
+
+        // 2. 無効なparentIdをクリア
+        let invalidParentSet = Set(report.invalidParentIds)
+        if !invalidParentSet.isEmpty {
+            for i in transactions.indices where invalidParentSet.contains(transactions[i].id) {
+                transactions[i].parentId = nil
+                transactions[i].isSplit = false
+                changed = true
+            }
+            Diagnostics.shared.log(
+                "Repaired \(invalidParentSet.count) transaction(s) with invalid parentId",
+                category: .migration
+            )
+        }
+
+        // 3. 存在しないカテゴリIDをnilにリセット
+        let invalidCatSet = Set(report.invalidCategoryIds)
+        if !invalidCatSet.isEmpty {
+            for i in transactions.indices where invalidCatSet.contains(transactions[i].id) {
+                transactions[i].categoryId = nil
+                changed = true
+            }
+            Diagnostics.shared.log(
+                "Repaired \(invalidCatSet.count) transaction(s) with invalid categoryId",
+                category: .migration
+            )
+        }
+
+        if changed {
+            saveAllTransactionsToSwiftData()
+            updateWidget()
+        }
+
+        return report
+    }
 }
 
 // MARK: - String SHA256 Extension

@@ -13,7 +13,9 @@ struct HierarchicalCategoryPicker: View {
     @State private var hasUserInteracted = false
     
     private var groups: [CategoryGroup] {
-        dataStore.groups(for: type)
+        dataStore.groups(for: type).filter { group in
+            !dataStore.items(for: group.id).isEmpty
+        }
     }
     
     private var itemsInBrowsingGroup: [CategoryItem] {
@@ -75,24 +77,28 @@ struct HierarchicalCategoryPicker: View {
             
             Spacer()
             
-            // バランスのためのダミー
-            HStack(spacing: 4) {
-                Image(systemName: "chevron.left")
-                Text("戻る")
-            }
-            .font(.subheadline)
-            .opacity(0)
+            // バランスのためのスペーサー
+            Spacer()
+                .frame(width: 60)
         }
         .padding(.bottom, 4)
     }
 
     private func groupButton(_ group: CategoryGroup) -> some View {
         Button {
-            withAnimation(.spring(response: 0.3)) {
-                browsingGroupId = group.id
+            let items = dataStore.items(for: group.id)
+            if items.count == 1 {
+                // アイテムが1つだけの場合は直接選択
+                selectedCategoryId = items[0].id
+                hasUserInteracted = true
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            } else {
+                withAnimation(.spring(response: 0.3)) {
+                    browsingGroupId = group.id
+                }
+                hasUserInteracted = true
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
             }
-            hasUserInteracted = true
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
         } label: {
             VStack(spacing: 4) {
                 if let hex = group.colorHex {

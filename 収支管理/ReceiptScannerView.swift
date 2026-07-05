@@ -75,6 +75,9 @@ struct ReceiptScannerView: View {
                 }
                 .onChange(of: selectedImage) { _, newImage in
                     guard let image = newImage else { return }
+                    parser.error = nil
+                    parser.warning = nil
+                    parser.result = nil
                     Task {
                         await parser.parseReceipt(from: image)
                         applyParseResult()
@@ -126,6 +129,7 @@ struct ReceiptScannerView: View {
                 VStack(spacing: 16) {
                     imageHeader
                     errorBanner
+                    warningBanner
                     parsedResultBanner
                     inputFormSection
                 }
@@ -203,9 +207,26 @@ struct ReceiptScannerView: View {
     }
 
     @ViewBuilder
+    private var warningBanner: some View {
+        if let warning = parser.warning {
+            HStack {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                Text(warning)
+                    .font(.caption)
+                    .foregroundStyle(.primary)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.orange.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+    }
+
+    @ViewBuilder
     private var parsedResultBanner: some View {
         if let result = parser.result {
-            parseResultSection(result)
+            parseResultSection(result, isIncomplete: parser.warning != nil)
         }
     }
 
@@ -260,51 +281,68 @@ struct ReceiptScannerView: View {
         .padding()
     }
 
-    private func parseResultSection(_ result: ReceiptParseResult) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+    private func parseResultSection(_ result: ReceiptParseResult, isIncomplete: Bool) -> some View {
+        let bannerColor: Color = isIncomplete ? .orange : .green
+        let bannerIcon = isIncomplete ? "exclamationmark.circle.fill" : "checkmark.circle.fill"
+        let bannerTitle = isIncomplete ? "一部読み取り完了" : "読み取り完了"
+
+        return VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                Text("読み取り完了")
+                Image(systemName: bannerIcon)
+                    .foregroundStyle(bannerColor)
+                Text(bannerTitle)
                     .font(.subheadline)
                     .fontWeight(.semibold)
             }
 
-            if let store = result.storeName {
-                HStack {
-                    Text("店舗:")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 60, alignment: .leading)
+            // Store name
+            HStack {
+                Text("店舗:")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 60, alignment: .leading)
+                if let store = result.storeName {
                     Text(store)
+                } else {
+                    Text("未検出")
+                        .foregroundStyle(.orange)
                 }
-                .font(.caption)
             }
+            .font(.caption)
 
-            if let date = result.date {
-                HStack {
-                    Text("日付:")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 60, alignment: .leading)
+            // Date
+            HStack {
+                Text("日付:")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 60, alignment: .leading)
+                if let date = result.date {
                     Text(date.fullDateString)
+                } else {
+                    Text("未検出 — 手動で入力してください")
+                        .foregroundStyle(.orange)
                 }
-                .font(.caption)
             }
+            .font(.caption)
 
-            if let amount = result.totalAmount {
-                HStack {
-                    Text("合計:")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 60, alignment: .leading)
+            // Amount
+            HStack {
+                Text("合計:")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 60, alignment: .leading)
+                if let amount = result.totalAmount {
                     Text(amount.currencyFormatted)
                         .fontWeight(.bold)
                         .foregroundStyle(Color.themeBlue)
+                } else {
+                    Text("未検出 — 手動で入力してください")
+                        .foregroundStyle(.orange)
+                        .fontWeight(.medium)
                 }
-                .font(.caption)
             }
+            .font(.caption)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.green.opacity(0.1))
+        .background(bannerColor.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -378,6 +416,7 @@ struct ReceiptScannerView: View {
                     .frame(width: 80, alignment: .leading)
                     .padding(.top, 4)
                 TextField("メモ（任意）", text: $memo, axis: .vertical)
+                    .textInputAutocapitalization(.never)
                     .lineLimit(3...5)
             }
             .padding()

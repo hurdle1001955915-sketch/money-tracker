@@ -9,6 +9,7 @@ struct GraphView: View {
     @State private var selectedGraphType: GraphType = .expense
     @State private var showReorderSheet = false
     @State private var selectedCategoryDetail: CategoryDetailInfo?
+    @State private var longPressTransactions: CategoryMonthTransactionsInfo?
 
     // Optimization: Graph Data Model
     private struct GraphData: Equatable {
@@ -287,6 +288,14 @@ struct GraphView: View {
         .navigationDestination(item: $selectedCategoryDetail) { detail in
             CategoryDetailGraphView(categoryId: detail.categoryId, type: detail.type)
         }
+        .navigationDestination(item: $longPressTransactions) { info in
+            CategoryMonthTransactionsView(
+                transactions: info.transactions,
+                categoryId: info.categoryId,
+                date: info.date,
+                type: info.type
+            )
+        }
     }
     
     @ViewBuilder
@@ -319,26 +328,28 @@ struct GraphView: View {
         
         return AnyView(CategoryPieChart(
             data: data,
-            selectedCategoryDetail: $selectedCategoryDetail
+            currentDate: currentDate,
+            selectedCategoryDetail: $selectedCategoryDetail,
+            longPressTransactions: $longPressTransactions
         ))
     }
 
     // Optimization: Extracted Subview
     private struct CategoryPieChart: View {
+        @EnvironmentObject var dataStore: DataStore
         let data: GraphData
+        let currentDate: Date
         @Binding var selectedCategoryDetail: CategoryDetailInfo?
-        
+        @Binding var longPressTransactions: CategoryMonthTransactionsInfo?
+
         var body: some View {
             VStack(spacing: 0) {
                 ZStack {
                     if data.sections.isEmpty {
-                        VStack(spacing: 8) {
-                            Image(systemName: "chart.pie")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                            Text("データがありません")
-                                .foregroundStyle(.secondary)
-                        }
+                        EmptyStateView(
+                            icon: "chart.pie",
+                            title: "データがありません"
+                        )
                     } else {
                         Chart(data.sections) { item in
                             SectorMark(
@@ -350,7 +361,7 @@ struct GraphView: View {
                             .foregroundStyle(item.color)
                         }
                         .chartLegend(.hidden)
-                        
+
                         VStack(spacing: 2) {
                             Text("合計")
                                 .font(.caption)
@@ -364,7 +375,7 @@ struct GraphView: View {
                 .frame(height: 250)
                 .padding()
                 .background(Color(.systemBackground))
-                
+
                 VStack(spacing: 0) {
                     HStack {
                         Text("合計")
@@ -378,9 +389,9 @@ struct GraphView: View {
                     .foregroundStyle(.primary)
                     .frame(minHeight: 50)
                     .padding(.horizontal, 16)
-                    
+
                     Divider()
-                    
+
                     ForEach(data.sections) { item in
                         Button {
                             // GraphType(data.type) -> TransactionType への変換が必要
@@ -391,20 +402,20 @@ struct GraphView: View {
                                 Circle()
                                     .fill(item.color)
                                     .frame(width: 12, height: 12)
-                                
+
                                 Text(item.category.name)
                                     .font(.subheadline)
-                                
+
                                 Spacer()
-                                
+
                                 let percent = data.total > 0 ? Double(item.amount) / Double(data.total) * 100 : 0
                                 Text(String(format: "%.1f%%", percent))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
-                                
+
                                 Text(item.amount.currencyFormatted)
                                     .font(.subheadline)
-                                
+
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -414,7 +425,21 @@ struct GraphView: View {
                             .padding(.horizontal, 16)
                             .contentShape(Rectangle())
                         }
-                        
+                        .onLongPressGesture {
+                            let txType = TransactionType(rawValue: data.type.rawValue) ?? .expense
+                            let transactions = dataStore.transactionsForMonth(currentDate)
+                                .filter { $0.type == txType && $0.categoryId == item.category.id }
+                                .sorted { $0.date > $1.date }
+                            guard !transactions.isEmpty else { return }
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            longPressTransactions = CategoryMonthTransactionsInfo(
+                                transactions: transactions,
+                                categoryId: item.category.id,
+                                date: currentDate,
+                                type: txType
+                            )
+                        }
+
                         if item.id != data.sections.last?.id {
                             Divider().padding(.leading, 40)
                         }
@@ -650,12 +675,11 @@ struct GraphView: View {
                     .foregroundStyle(.secondary)
                 }
             } else {
-                Text("予算が設定されていません")
-                .foregroundStyle(.secondary)
-                
-                Text("設定 > 予算設定 から設定できます")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                EmptyStateView(
+                    icon: "yensign.circle",
+                    title: "予算が設定されていません",
+                    subtitle: "設定 > 予算設定 から設定できます"
+                )
             }
         }
         .frame(maxWidth: .infinity)
@@ -670,6 +694,22 @@ struct CategorySection: Identifiable, Equatable {
     let category: Category
     let amount: Int
     let color: Color
+}
+
+struct CategoryMonthTransactionsInfo: Identifiable, Hashable {
+    let id = UUID()
+    let transactions: [Transaction]
+    let categoryId: UUID
+    let date: Date
+    let type: TransactionType
+
+    static func == (lhs: CategoryMonthTransactionsInfo, rhs: CategoryMonthTransactionsInfo) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 
 struct CategoryDetailInfo: Identifiable, Hashable {

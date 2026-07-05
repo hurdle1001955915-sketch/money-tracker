@@ -314,9 +314,10 @@ final class ClassificationRulesStore: ObservableObject {
     /// デフォルトルールが存在しない場合、初期ルールを注入する
     @MainActor
     func ensureDefaultRules(with dataStore: DataStore) {
-        // 既にルールがある場合は収入ルールのマージのみ行う
+        // 既にルールがある場合はマイグレーションのみ行う
         if !rules.isEmpty {
             ensureIncomeRules(with: dataStore)
+            ensureExpandedRulesV2(with: dataStore)
             return
         }
         
@@ -436,6 +437,104 @@ final class ClassificationRulesStore: ObservableObject {
             // 現金・ATM
             ("ATM", "現金入出金", .expense),
             ("郵便局", "現金入出金", .expense),
+
+            // ===== ジャンルキーワード（飲食） =====
+            ("ラーメン", "外食", .expense),
+            ("らーめん", "外食", .expense),
+            ("拉麺", "外食", .expense),
+            ("中華そば", "外食", .expense),
+            ("つけ麺", "外食", .expense),
+            ("蕎麦", "外食", .expense),
+            ("そば", "外食", .expense),
+            ("うどん", "外食", .expense),
+            ("焼肉", "外食", .expense),
+            ("やきにく", "外食", .expense),
+            ("焼き鳥", "外食", .expense),
+            ("やきとり", "外食", .expense),
+            ("焼鳥", "外食", .expense),
+            ("カレー", "外食", .expense),
+            ("ステーキ", "外食", .expense),
+            ("ハンバーグ", "外食", .expense),
+            ("お好み焼", "外食", .expense),
+            ("鉄板焼", "外食", .expense),
+            ("居酒屋", "外食", .expense),
+            ("寿司", "外食", .expense),
+            ("鮨", "外食", .expense),
+            ("弁当", "食費", .expense),
+            ("定食", "外食", .expense),
+            ("食堂", "外食", .expense),
+            ("レストラン", "外食", .expense),
+            ("ダイニング", "外食", .expense),
+            ("珈琲", "カフェ", .expense),
+            ("コーヒー", "カフェ", .expense),
+            ("coffee", "カフェ", .expense),
+            ("cafe", "カフェ", .expense),
+            ("喫茶", "カフェ", .expense),
+
+            // ===== チェーン店追加 =====
+            // 外食チェーン
+            ("鳥貴族", "外食", .expense),
+            ("CoCo壱", "外食", .expense),
+            ("ココイチ", "外食", .expense),
+            ("丸亀製麺", "外食", .expense),
+            ("はなまるうどん", "外食", .expense),
+            ("餃子の王将", "外食", .expense),
+            ("王将", "外食", .expense),
+            ("天下一品", "外食", .expense),
+            ("モスバーガー", "外食", .expense),
+            ("ケンタッキー", "外食", .expense),
+            ("KFC", "外食", .expense),
+            ("ガスト", "外食", .expense),
+            ("バーミヤン", "外食", .expense),
+            ("デニーズ", "外食", .expense),
+            ("ロイヤルホスト", "外食", .expense),
+            ("大戸屋", "外食", .expense),
+            ("やよい軒", "外食", .expense),
+            ("なか卯", "外食", .expense),
+            ("かつや", "外食", .expense),
+            ("てんや", "外食", .expense),
+            ("リンガーハット", "外食", .expense),
+            ("幸楽苑", "外食", .expense),
+            ("日高屋", "外食", .expense),
+            ("魚民", "外食", .expense),
+            ("白木屋", "外食", .expense),
+            ("磯丸水産", "外食", .expense),
+            // カフェチェーン
+            ("星乃珈琲", "カフェ", .expense),
+            ("コメダ", "カフェ", .expense),
+            ("サンマルク", "カフェ", .expense),
+            ("ベローチェ", "カフェ", .expense),
+            ("プロント", "カフェ", .expense),
+            // デリバリー
+            ("wolt", "デリバリー", .expense),
+            ("Wolt", "デリバリー", .expense),
+            ("menu", "デリバリー", .expense),
+            // ドラッグストア追加
+            ("スギ薬局", "ドラッグストア", .expense),
+            ("薬局", "ドラッグストア", .expense),
+            ("ドラッグ", "ドラッグストア", .expense),
+            ("ツルハ", "ドラッグストア", .expense),
+            ("サンドラッグ", "ドラッグストア", .expense),
+            ("ココカラ", "ドラッグストア", .expense),
+            // 百貨店追加
+            ("髙島屋", "百貨店", .expense),
+            ("高島屋", "百貨店", .expense),
+            ("大丸", "百貨店", .expense),
+            ("阪急百貨店", "百貨店", .expense),
+            ("阪神百貨店", "百貨店", .expense),
+            ("近鉄百貨店", "百貨店", .expense),
+            // ガソリン追加
+            ("apollostation", "ガソリン", .expense),
+            ("コスモ石油", "ガソリン", .expense),
+            ("シェル", "ガソリン", .expense),
+            ("昭和シェル", "ガソリン", .expense),
+            // スーパー追加
+            ("業務スーパー", "スーパー", .expense),
+            ("万代", "スーパー", .expense),
+            ("関西スーパー", "スーパー", .expense),
+            ("マルエツ", "スーパー", .expense),
+            ("サミット", "スーパー", .expense),
+            ("コーナン", "日用品", .expense),
 
             // ===== 収入ルール =====
 
@@ -599,8 +698,148 @@ final class ClassificationRulesStore: ObservableObject {
         UserDefaults.standard.set(true, forKey: migrationKey)
     }
 
+    /// 既存ユーザーに拡張ルール（ジャンルキーワード+チェーン店）を追加
+    @MainActor
+    private func ensureExpandedRulesV2(with dataStore: DataStore) {
+        let migrationKey = "expanded_rules_v2_migration"
+
+        if UserDefaults.standard.bool(forKey: migrationKey) {
+            return
+        }
+
+        let expandedDefaults: [(keyword: String, category: String, type: TransactionType)] = [
+            // ジャンルキーワード（飲食）
+            ("ラーメン", "外食", .expense),
+            ("らーめん", "外食", .expense),
+            ("拉麺", "外食", .expense),
+            ("中華そば", "外食", .expense),
+            ("つけ麺", "外食", .expense),
+            ("蕎麦", "外食", .expense),
+            ("そば", "外食", .expense),
+            ("うどん", "外食", .expense),
+            ("焼肉", "外食", .expense),
+            ("やきにく", "外食", .expense),
+            ("焼き鳥", "外食", .expense),
+            ("やきとり", "外食", .expense),
+            ("焼鳥", "外食", .expense),
+            ("カレー", "外食", .expense),
+            ("ステーキ", "外食", .expense),
+            ("ハンバーグ", "外食", .expense),
+            ("お好み焼", "外食", .expense),
+            ("鉄板焼", "外食", .expense),
+            ("居酒屋", "外食", .expense),
+            ("寿司", "外食", .expense),
+            ("鮨", "外食", .expense),
+            ("弁当", "食費", .expense),
+            ("定食", "外食", .expense),
+            ("食堂", "外食", .expense),
+            ("レストラン", "外食", .expense),
+            ("ダイニング", "外食", .expense),
+            ("珈琲", "カフェ", .expense),
+            ("コーヒー", "カフェ", .expense),
+            ("coffee", "カフェ", .expense),
+            ("cafe", "カフェ", .expense),
+            ("喫茶", "カフェ", .expense),
+            // チェーン店
+            ("鳥貴族", "外食", .expense),
+            ("CoCo壱", "外食", .expense),
+            ("ココイチ", "外食", .expense),
+            ("丸亀製麺", "外食", .expense),
+            ("はなまるうどん", "外食", .expense),
+            ("餃子の王将", "外食", .expense),
+            ("王将", "外食", .expense),
+            ("天下一品", "外食", .expense),
+            ("モスバーガー", "外食", .expense),
+            ("ケンタッキー", "外食", .expense),
+            ("KFC", "外食", .expense),
+            ("ガスト", "外食", .expense),
+            ("バーミヤン", "外食", .expense),
+            ("デニーズ", "外食", .expense),
+            ("ロイヤルホスト", "外食", .expense),
+            ("大戸屋", "外食", .expense),
+            ("やよい軒", "外食", .expense),
+            ("なか卯", "外食", .expense),
+            ("かつや", "外食", .expense),
+            ("てんや", "外食", .expense),
+            ("リンガーハット", "外食", .expense),
+            ("幸楽苑", "外食", .expense),
+            ("日高屋", "外食", .expense),
+            ("魚民", "外食", .expense),
+            ("白木屋", "外食", .expense),
+            ("磯丸水産", "外食", .expense),
+            // カフェ
+            ("星乃珈琲", "カフェ", .expense),
+            ("コメダ", "カフェ", .expense),
+            ("サンマルク", "カフェ", .expense),
+            ("ベローチェ", "カフェ", .expense),
+            ("プロント", "カフェ", .expense),
+            // デリバリー
+            ("wolt", "デリバリー", .expense),
+            ("Wolt", "デリバリー", .expense),
+            // ドラッグストア
+            ("スギ薬局", "ドラッグストア", .expense),
+            ("薬局", "ドラッグストア", .expense),
+            ("ドラッグ", "ドラッグストア", .expense),
+            ("ツルハ", "ドラッグストア", .expense),
+            ("サンドラッグ", "ドラッグストア", .expense),
+            ("ココカラ", "ドラッグストア", .expense),
+            // 百貨店
+            ("髙島屋", "百貨店", .expense),
+            ("高島屋", "百貨店", .expense),
+            ("大丸", "百貨店", .expense),
+            ("阪急百貨店", "百貨店", .expense),
+            ("阪神百貨店", "百貨店", .expense),
+            ("近鉄百貨店", "百貨店", .expense),
+            // ガソリン
+            ("apollostation", "ガソリン", .expense),
+            ("コスモ石油", "ガソリン", .expense),
+            ("シェル", "ガソリン", .expense),
+            ("昭和シェル", "ガソリン", .expense),
+            // スーパー
+            ("業務スーパー", "スーパー", .expense),
+            ("万代", "スーパー", .expense),
+            ("関西スーパー", "スーパー", .expense),
+            ("マルエツ", "スーパー", .expense),
+            ("サミット", "スーパー", .expense),
+            ("コーナン", "日用品", .expense),
+        ]
+
+        var addedCount = 0
+
+        for def in expandedDefaults {
+            let normalizedKeyword = ClassificationRule.normalizeForMatching(def.keyword)
+            let exists = rules.contains { r in
+                r.transactionType == def.type &&
+                ClassificationRule.normalizeForMatching(r.keyword) == normalizedKeyword
+            }
+
+            if exists { continue }
+
+            if let category = dataStore.findCategory(name: def.category, type: def.type) {
+                let rule = ClassificationRule(
+                    keyword: def.keyword,
+                    matchType: .contains,
+                    targetCategoryId: category.id,
+                    targetCategoryName: category.name,
+                    transactionType: def.type,
+                    isEnabled: true,
+                    priority: 50
+                )
+                rules.append(rule)
+                addedCount += 1
+            }
+        }
+
+        if addedCount > 0 {
+            saveRules()
+            print("[ensureExpandedRulesV2] Added \(addedCount) expanded rules for existing user.")
+        }
+
+        UserDefaults.standard.set(true, forKey: migrationKey)
+    }
+
     // MARK: - Persistence
-    
+
     private func loadRules() {
         guard let data = UserDefaults.standard.data(forKey: storageKey),
               let decoded = try? JSONDecoder().decode([ClassificationRule].self, from: data) else {

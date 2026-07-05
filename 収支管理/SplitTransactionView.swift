@@ -17,18 +17,19 @@ struct SplitTransactionView: View {
     @State private var showDatePicker = false
     @State private var showValidationError = false
     @State private var validationMessage = ""
+    @State private var showCancelConfirmation = false
     
     init(sourceTransaction: Transaction? = nil) {
         self.sourceTransaction = sourceTransaction
     }
     
     private var totalAmount: Int {
-        Int(totalAmountText.replacingOccurrences(of: ",", with: "")) ?? 0
+        evaluateAmountExpression(totalAmountText) ?? 0
     }
-    
+
     private var allocatedAmount: Int {
         splits.reduce(0) { sum, item in
-            sum + (Int(item.amountText.replacingOccurrences(of: ",", with: "")) ?? 0)
+            sum + (evaluateAmountExpression(item.amountText) ?? 0)
         }
     }
     
@@ -38,6 +39,10 @@ struct SplitTransactionView: View {
     
     private var isValid: Bool {
         totalAmount > 0 && allocatedAmount == totalAmount && splits.count >= 2
+    }
+
+    private var hasPartialInput: Bool {
+        totalAmount > 0 || splits.contains { !$0.amountText.isEmpty }
     }
     
     var body: some View {
@@ -72,6 +77,7 @@ struct SplitTransactionView: View {
                 // メモ
                 Section("メモ（共通）") {
                     TextField("メモ（任意）", text: $memo)
+                        .textInputAutocapitalization(.never)
                 }
                 
                 // 分割項目
@@ -99,7 +105,7 @@ struct SplitTransactionView: View {
                     }
                 } header: {
                     HStack {
-                        Text("分割項目")
+                        Text("分割項目（2つ以上必須）")
                         Spacer()
                         if totalAmount > 0 {
                             Text("残り: \(remainingAmount.currencyFormatted)")
@@ -182,7 +188,13 @@ struct SplitTransactionView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("閉じる") { dismiss() }
+                    Button("閉じる") {
+                        if hasPartialInput {
+                            showCancelConfirmation = true
+                        } else {
+                            dismiss()
+                        }
+                    }
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -201,6 +213,12 @@ struct SplitTransactionView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(validationMessage)
+            }
+            .alert("入力内容を破棄しますか？", isPresented: $showCancelConfirmation) {
+                Button("破棄", role: .destructive) { dismiss() }
+                Button("戻る", role: .cancel) {}
+            } message: {
+                Text("入力中のデータがあります。閉じると内容は失われます。")
             }
             .onAppear {
                 setupInitialValues()
@@ -240,7 +258,7 @@ struct SplitTransactionView: View {
         guard remainingAmount > 0, let lastIndex = splits.indices.last else { return }
         
         // 最後の項目に残りを配分
-        let currentAmount = Int(splits[lastIndex].amountText.replacingOccurrences(of: ",", with: "")) ?? 0
+        let currentAmount = evaluateAmountExpression(splits[lastIndex].amountText) ?? 0
         splits[lastIndex].amountText = String(currentAmount + remainingAmount)
     }
     
@@ -267,7 +285,7 @@ struct SplitTransactionView: View {
         
         // 分割取引を作成
         for item in splits {
-            let amount = Int(item.amountText.replacingOccurrences(of: ",", with: "")) ?? 0
+            let amount = evaluateAmountExpression(item.amountText) ?? 0
             guard amount > 0 else { continue }
             
             let tx = Transaction(

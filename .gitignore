@@ -1,0 +1,7 @@
+
+# 2026-07-06 統合時に追加
+.DS_Store
+*.xcuserstate
+build/
+money-tracker/
+エクスポートCSV/

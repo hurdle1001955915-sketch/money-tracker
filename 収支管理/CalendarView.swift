@@ -13,17 +13,8 @@ struct CalendarView: View {
     // 🔍検索
     @State private var showSearchView = false
 
-    // 明細：編集
+    // カレンダーグリッドのダブルタップ用（明細編集はDayDetailViewが管理）
     @State private var editingTransaction: Transaction? = nil
-    
-    // 複製
-    @State private var showDuplicateSheet = false
-    @State private var transactionToDuplicate: Transaction? = nil
-    @State private var duplicateDate: Date = Date()
-    
-    // 振替編集
-    @State private var showTransferEdit = false
-    @State private var editingTransfer: Transaction? = nil
 
     private var monthSummary: (income: Int, expense: Int, balance: Int, carryOver: Int) {
         let income = dataStore.monthlyIncome(for: currentDate)
@@ -41,7 +32,7 @@ struct CalendarView: View {
 
                 summaryBar
 
-                dayDetailSection
+                DayDetailView(date: selectedDate, embedded: true)
                     .frame(maxHeight: .infinity)
             }
             .background(Color(.systemGroupedBackground))
@@ -63,6 +54,8 @@ struct CalendarView: View {
                             }
                             .font(.subheadline)
                         }
+                        .accessibilityLabel("今日に戻る")
+                        .accessibilityHint("ダブルタップで今月のカレンダーに戻ります")
                     }
                 }
 
@@ -78,10 +71,12 @@ struct CalendarView: View {
                                 .font(.system(size: 16, weight: .bold))
                                 .padding(.horizontal, 4)
                         }
+                        .accessibilityLabel("前の月へ")
 
                         Text(currentDate.yearMonthString)
                             .font(AppTheme.Typography.headlineMedium)
                             .layoutPriority(1)
+                            .accessibilityLabel("\(currentDate.yearMonthString)を表示中")
 
                         Button {
                             HapticManager.shared.selection()
@@ -93,20 +88,23 @@ struct CalendarView: View {
                                 .font(.system(size: 16, weight: .bold))
                                 .padding(.horizontal, 4)
                         }
+                        .accessibilityLabel("次の月へ")
                     }
                     .foregroundStyle(Color.themeBlue)
                 }
-                
+
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSearchView = true
                     } label: {
                         Image(systemName: "magnifyingglass")
                     }
+                    .accessibilityLabel("取引を検索")
+                    .accessibilityHint("ダブルタップでメモ検索画面を開きます")
                 }
             }
 
-            // 入力（追加/編集）
+            // 入力（カレンダーグリッドのダブルタップから起動）
             .sheet(isPresented: $showInputView) {
                 TransactionInputView(
                     preselectedDate: selectedDate,
@@ -117,34 +115,10 @@ struct CalendarView: View {
                     editingTransaction = nil
                 }
             }
-            
-            // 振替編集
-            .sheet(isPresented: $showTransferEdit) {
-                TransferInputView(editingTransaction: editingTransfer) {
-                    showTransferEdit = false
-                    editingTransfer = nil
-                }
-            }
 
             // 🔍検索（メモ検索）
             .sheet(isPresented: $showSearchView) {
                 TransactionSearchView()
-            }
-            
-            // 複製
-            .sheet(isPresented: $showDuplicateSheet) {
-                DuplicateTransactionSheet(
-                    transaction: transactionToDuplicate,
-                    targetDate: $duplicateDate,
-                    onDuplicate: { date in
-                        if let tx = transactionToDuplicate {
-                            dataStore.duplicateTransaction(tx, toDate: date)
-                            UINotificationFeedbackGenerator().notificationOccurred(.success)
-                        }
-                        showDuplicateSheet = false
-                        transactionToDuplicate = nil
-                    }
-                )
             }
         }
         .onChange(of: currentDate) { _, newValue in
@@ -251,22 +225,21 @@ struct CalendarView: View {
                 Spacer()
             }
 
-            if isInCurrentMonth, income > 0 {
-                Text("+\(income.currencyFormattedShort)")
-                    .font(.system(size: 9, weight: .semibold))
-                    .minimumScaleFactor(0.8)
-                    .foregroundStyle(Color(UIColor.systemBlue))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
-
-            if isInCurrentMonth, expense > 0 {
-                Text("-\(expense.currencyFormattedShort)")
-                    .font(.system(size: 9, weight: .semibold))
-                    .minimumScaleFactor(0.8)
-                    .foregroundStyle(Color(UIColor.systemRed))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+            if isInCurrentMonth {
+                if income > 0 {
+                    Text(income.currencyFormatted)
+                        .font(.system(size: 8, weight: .medium, design: .rounded))
+                        .foregroundStyle(AppTheme.income)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                }
+                if expense > 0 {
+                    Text(expense.currencyFormatted)
+                        .font(.system(size: 8, weight: .medium, design: .rounded))
+                        .foregroundStyle(AppTheme.expense)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                }
             }
 
             Spacer()
@@ -288,6 +261,10 @@ struct CalendarView: View {
                 .padding(2)
         )
         .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(dayCellAccessibilityLabel(date: date, day: day, isInCurrentMonth: isInCurrentMonth, income: income, expense: expense))
+        .accessibilityHint(isInCurrentMonth ? "タップで選択、ダブルタップで新規取引を追加" : "タップで月を移動して選択")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
 
         // ▼ ダブルタップ：入力画面
         .highPriorityGesture(
@@ -326,6 +303,8 @@ struct CalendarView: View {
                     )
                 }
                 .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("収入 \(monthSummary.income)円")
 
                 VStack(spacing: 4) {
                     Text("支出")
@@ -338,6 +317,8 @@ struct CalendarView: View {
                     )
                 }
                 .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("支出 \(monthSummary.expense)円")
 
                 VStack(spacing: 4) {
                     Text("合計")
@@ -350,6 +331,8 @@ struct CalendarView: View {
                     )
                 }
                 .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("合計 \(monthSummary.balance)円")
             }
             .padding(.vertical, AppTheme.Spacing.sm)
             .padding(.horizontal, AppTheme.Spacing.lg)
@@ -368,153 +351,53 @@ struct CalendarView: View {
                 .padding(.horizontal, AppTheme.Spacing.lg + 8)
                 .padding(.vertical, 4)
             }
+
+            if let overallBudget = overallBudgetForCurrentMonth {
+                let remaining = overallBudget.amount - monthSummary.expense
+                Divider().padding(.horizontal)
+                HStack {
+                    Text("予算残り")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    if remaining >= 0 {
+                        Text(remaining.currencyFormatted)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("\(abs(remaining).currencyFormatted) 超過")
+                            .font(.caption2)
+                            .foregroundStyle(AppTheme.expense)
+                    }
+                }
+                .padding(.horizontal, AppTheme.Spacing.lg + 8)
+                .padding(.vertical, 4)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(remaining >= 0 ? "予算残り \(remaining)円" : "予算 \(abs(remaining))円超過")
+            }
         }
         .background(Color(.systemBackground))
     }
 
-    // MARK: - Day List
-
-    private var dayDetailSection: some View {
-        let dayTransactions = dataStore.sortedTransactionsForDate(
-            selectedDate,
-            sortOrder: settings.sameDaySortOrder
-        )
-
-        return Group {
-            if dayTransactions.isEmpty {
-                Text("取引がありません")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    .padding(.top, 24)
-                    .background(Color(.systemBackground))
-            } else {
-                List {
-                    ForEach(dayTransactions) { transaction in
-                        transactionRow(transaction)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    // フルスワイプまたはボタンタップで即座に削除
-                                    deleteTransaction(transaction)
-                                } label: {
-                                    Label("削除", systemImage: "trash")
-                                }
-                            }
-                            .swipeActions(edge: .leading) {
-                                Button {
-                                    transactionToDuplicate = transaction
-                                    duplicateDate = selectedDate
-                                    showDuplicateSheet = true
-                                } label: {
-                                    Label("複製", systemImage: "doc.on.doc")
-                                }
-                                .tint(.blue)
-                            }
-                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                            .listRowSeparator(.visible)
-                    }
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .background(Color(.systemBackground))
-            }
-        }
-    }
-
-    private func transactionRow(_ transaction: Transaction) -> some View {
-        // IDからカテゴリ取得
-        let category = dataStore.category(for: transaction.categoryId)
-        let accountStore = AccountStore.shared
-        // 振替の場合は動的に口座名を解決
-        let displayName: String = {
-            if transaction.isTransfer {
-                return transaction.transferDisplayLabel(accountStore: accountStore)
-            } else if let category = category {
-                return category.name
-            } else {
-                return dataStore.categoryName(for: transaction.categoryId)
-            }
-        }()
-        let amountColor: Color = {
-            switch transaction.type {
-            case .income: return Color(UIColor.systemBlue)
-            case .expense: return Color(UIColor.systemRed)
-            case .transfer: return Color(UIColor.systemOrange)
-            }
-        }()
-
-        return HStack {
-            if transaction.type == .transfer {
-                // 振替はアイコンで表示
-                Image(systemName: "arrow.left.arrow.right")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                    .frame(width: 12, height: 12)
-            } else if let category = category {
-                Circle()
-                    .fill(category.color)
-                    .frame(width: 12, height: 12)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(displayName)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-
-                if !transaction.memo.isEmpty {
-                    Text(transaction.memo)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-
-            Spacer()
-
-            HStack(spacing: 6) {
-                if transaction.isRecurring {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                if transaction.isSplit {
-                    Image(systemName: "square.split.2x1")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Text(transaction.amount.currencyFormatted)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(amountColor)
-            }
-        }
-        .frame(minHeight: 50)
-        .padding(.horizontal, 16)
-        .contentShape(Rectangle())
-
-        // タップ：編集
-        .onTapGesture {
-            if transaction.type == .transfer {
-                editingTransfer = transaction
-                showTransferEdit = true
-            } else {
-                editingTransaction = transaction
-                selectedDate = transaction.date
-                showInputView = true
-            }
+    /// 当月の全体予算（categoryId == nil）を返す
+    private var overallBudgetForCurrentMonth: Budget? {
+        let cal = Calendar.current
+        let year = cal.component(.year, from: currentDate)
+        let month = cal.component(.month, from: currentDate)
+        return dataStore.budgets.first { budget in
+            budget.categoryId == nil && budget.year == year && budget.month == month
         }
     }
 
     // MARK: - Helpers
 
-    private func deleteTransaction(_ transaction: Transaction) {
-        withAnimation {
-            deletionManager.deleteTransaction(transaction, from: dataStore)
-        }
-        // ハプティックフィードバック
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    private func dayCellAccessibilityLabel(date: Date, day: Int, isInCurrentMonth: Bool, income: Int, expense: Int) -> String {
+        guard isInCurrentMonth else { return "\(day)日、別の月" }
+        var label = "\(date.month)月\(day)日"
+        if income > 0 { label += "、収入\(income.currencyFormatted)" }
+        if expense > 0 { label += "、支出\(expense.currencyFormatted)" }
+        if income == 0 && expense == 0 { label += "、取引なし" }
+        return label
     }
 
     private func weekdayColor(for day: String) -> Color {
@@ -558,81 +441,6 @@ struct CalendarView: View {
         // 6週(42マス)固定で返す → 表示崩れ/日付飛び防止
         return (0..<42).compactMap { cal.date(byAdding: .day, value: $0, to: gridStart) }
     }
+
 }
 
-extension CalendarView {
-    // 既存の DayDetailView は CalendarView内に定義されていたが、
-    // CalendarView内で直接 dayDetailSection を使っており、DayDetailViewは使われていなかった可能性がある、
-    // あるいは別画面（例えばウィジェットからのリンク）で使われていたか？
-    // File contentを見ると、末尾に extension CalendarView { struct DayDetailView ... } がある。
-    // しかしCalendarView.body内で使われている形跡はない。
-    // DayDetailView単体で使われるケースがあるなら更新必須。
-    // ここも更新しておきます。
-
-    struct DayDetailView: View {
-        @EnvironmentObject var dataStore: DataStore
-        @EnvironmentObject var settings: AppSettings
-        @EnvironmentObject var deletionManager: DeletionManager
-
-        let date: Date
-
-        @State private var showInputView = false
-        @State private var editingTransaction: Transaction?
-
-        var body: some View {
-            List {
-                let transactions = dataStore.sortedTransactionsForDate(date, sortOrder: settings.sameDaySortOrder)
-
-                ForEach(transactions) { transaction in
-                    HStack {
-                        // カテゴリ名参照
-                        Text(dataStore.categoryName(for: transaction.categoryId))
-                        Spacer()
-                        Text(transaction.amount.currencyFormatted)
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        editingTransaction = transaction
-                        showInputView = true
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            deleteTransaction(transaction)
-                        } label: {
-                            Label("削除", systemImage: "trash")
-                        }
-                    }
-                }
-            }
-            .navigationTitle(date.formatted(date: .abbreviated, time: .omitted))
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        editingTransaction = nil
-                        showInputView = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .sheet(isPresented: $showInputView) {
-                TransactionInputView(
-                    preselectedDate: date,
-                    editingTransaction: editingTransaction,
-                    dismissAfterSave: true
-                ) {
-                    showInputView = false
-                    editingTransaction = nil
-                }
-            }
-        }
-        
-        private func deleteTransaction(_ transaction: Transaction) {
-            withAnimation {
-                deletionManager.deleteTransaction(transaction, from: dataStore)
-            }
-            // ハプティックフィードバック
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        }
-    }
-}

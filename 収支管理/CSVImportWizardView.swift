@@ -535,38 +535,28 @@ struct ImportWizardStep1View: View {
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
 
-                    if state.unresolvedCount > 0 || state.transferCandidateCount > 0 {
-                        Button {
-                            withAnimation {
+                    Button {
+                        withAnimation {
+                            if state.unresolvedCount > 0 || state.transferCandidateCount > 0 {
                                 state.currentStep = .resolve
-                            }
-                        } label: {
-                            HStack {
-                                Text("分類・振替へ")
-                                Image(systemName: "chevron.right")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .foregroundStyle(.white)
-                            .background(Color.orange)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                        }
-                    } else {
-                        Button {
-                            withAnimation {
+                            } else {
                                 state.currentStep = .summary
                             }
-                        } label: {
-                            HStack {
-                                Text("保存前の確認")
-                                Image(systemName: "chevron.right")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .foregroundStyle(.white)
-                            .background(Color.themeBlue)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
+                    } label: {
+                        HStack {
+                            if state.unresolvedCount > 0 || state.transferCandidateCount > 0 {
+                                Text("分類・振替を確認")
+                            } else {
+                                Text("確認して保存")
+                            }
+                            Image(systemName: "chevron.right")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .foregroundStyle(.white)
+                        .background(state.unresolvedCount > 0 || state.transferCandidateCount > 0 ? Color.orange : Color.themeBlue)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 }
                 .padding()

@@ -234,6 +234,54 @@ extension View {
     }
 }
 
+// MARK: - Empty State View
+
+/// 統一された空状態コンポーネント
+/// アプリ全体で一貫した空状態表示を提供する
+struct EmptyStateView: View {
+    let icon: String
+    let title: String
+    var subtitle: String? = nil
+    var actionTitle: String? = nil
+    var action: (() -> Void)? = nil
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            Image(systemName: icon)
+                .font(.system(size: 48))
+                .foregroundStyle(.quaternary)
+
+            VStack(spacing: 8) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                }
+            }
+
+            if let actionTitle = actionTitle, let action = action {
+                Button(action: action) {
+                    Text(actionTitle)
+                        .fontWeight(.medium)
+                }
+                .buttonStyle(.bordered)
+                .tint(.blue)
+                .controlSize(.large)
+            }
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 // MARK: - Lazy View
 
 /// 遅延読み込みビュー（TabViewのパフォーマンス向上用）
@@ -301,6 +349,28 @@ extension UInt16 {
             UInt8((self >> 8) & 0xFF)
         ]
     }
+}
+
+// MARK: - Expression Evaluator
+
+/// 数式文字列を評価してIntで返す（例: "100+250" → 350）
+func evaluateAmountExpression(_ text: String) -> Int? {
+    let cleaned = text
+        .replacingOccurrences(of: ",", with: "")
+        .replacingOccurrences(of: " ", with: "")
+
+    let allowed = CharacterSet(charactersIn: "0123456789+-*/.")
+    guard cleaned.unicodeScalars.allSatisfy({ allowed.contains($0) }) else {
+        return nil
+    }
+    guard !cleaned.isEmpty else { return nil }
+
+    let expression = NSExpression(format: cleaned)
+    if let result = expression.expressionValue(with: nil, context: nil) as? NSNumber {
+        let value = Int(result.doubleValue)
+        return value > 0 ? value : nil
+    }
+    return nil
 }
 
 // MARK: - Week Days Helper

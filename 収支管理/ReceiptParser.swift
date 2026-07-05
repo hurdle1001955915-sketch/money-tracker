@@ -14,6 +14,7 @@ struct ReceiptParseResult: Equatable {
 final class ReceiptParser: ObservableObject {
     @Published var isProcessing: Bool = false
     @Published var error: String?
+    @Published var warning: String?
     @Published var result: ReceiptParseResult?
 
     /// Parse receipt info from a selected image using Vision framework.
@@ -23,12 +24,30 @@ final class ReceiptParser: ObservableObject {
         isProcessing = true
         defer { isProcessing = false }
         error = nil
+        warning = nil
         result = nil
 
         do {
             let extractedText = try await recognizeText(from: cgImage)
+            if extractedText.isEmpty {
+                self.error = "テキストを読み取れませんでした。画像を変えて再度お試しください。"
+                return
+            }
             let parsedResult = extractInformation(from: extractedText)
             self.result = parsedResult
+
+            // Build warning for missing fields
+            var missingFields: [String] = []
+            if parsedResult.totalAmount == nil {
+                missingFields.append("金額")
+            }
+            if parsedResult.date == nil {
+                missingFields.append("日付")
+            }
+            if !missingFields.isEmpty {
+                let joined = missingFields.joined(separator: "・")
+                self.warning = "\(joined)を読み取れませんでした。手動で入力してください。"
+            }
         } catch {
             self.error = "読み取りに失敗しました: \(error.localizedDescription)"
         }

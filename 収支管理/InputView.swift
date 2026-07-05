@@ -58,6 +58,11 @@ struct TransactionInputView: View {
     @State private var showValidationError = false
     @State private var validationMessage = ""
 
+    // カテゴリ未選択確認
+    @State private var hasUserSelectedCategory: Bool = false
+    @State private var showCategoryConfirmAlert = false
+    @State private var isInitialized = false
+
     // よく使うカテゴリ（初期表示時に固定）
     @State private var cachedFrequentCategories: [Category] = []
 
@@ -78,6 +83,9 @@ struct TransactionInputView: View {
     private var frequentCategories: [Category] { cachedFrequentCategories }
     private var isEditing: Bool { editingTransaction != nil }
     private var isTransfer: Bool { editingTransaction?.type == .transfer }
+    private var selectedCategoryName: String {
+        categoryId.flatMap { id in categories.first(where: { $0.id == id })?.name } ?? "未分類"
+    }
 
     private var canSave: Bool {
         let trimmed = amountText
@@ -122,8 +130,10 @@ struct TransactionInputView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 12) {
-                    // 1. クイックアクション (新規時のみ)
-                    if !isEditing {
+                    // 1. クイックアクション
+                    if isEditing {
+                        editQuickActionRow
+                    } else {
                         quickActionRow
                     }
 
@@ -152,6 +162,8 @@ struct TransactionInputView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("日付選択: \(dateString)")
+                        .accessibilityHint("ダブルタップでカレンダーを\(isDatePickerExpanded ? "閉じます" : "開きます")")
 
                         // インラインカレンダー
                         if isDatePickerExpanded {
@@ -179,6 +191,7 @@ struct TransactionInputView: View {
                             Text("収入").tag(TransactionType.income)
                         }
                         .pickerStyle(.segmented)
+                        .accessibilityLabel("取引区分: \(type == .expense ? "支出" : "収入")")
                         .onChange(of: type) { _, newType in
                             normalizeCategoryIfNeeded()
                             // タイプ変更時によく使うカテゴリのキャッシュを更新
@@ -206,16 +219,21 @@ struct TransactionInputView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                             .buttonStyle(.plain)
-                            
+                            .accessibilityLabel("電卓を開く")
+                            .accessibilityHint("ダブルタップで電卓を使って金額を入力します")
+
                             Spacer()
                             TextField("0", text: $amountText)
                                 .font(.system(size: 28, weight: .semibold, design: .rounded))
-                                .keyboardType(.numbersAndPunctuation) // 演算子を入力可能に
+                                .keyboardType(.numberPad)
                                 .focused($focusedField, equals: .amount)
                                 .multilineTextAlignment(.trailing)
+                                .accessibilityLabel(amountText.isEmpty ? "金額入力欄" : "\(type == .expense ? "支出" : "収入") \(amountText)円")
+                                .accessibilityHint("金額を数字で入力してください。数式も使えます")
                             Text("円")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
+                                .accessibilityHidden(true)
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 12)
@@ -242,6 +260,7 @@ struct TransactionInputView: View {
                                         ForEach(frequentCategories) { cat in
                                             Button {
                                                 categoryId = cat.id
+                                                hasUserSelectedCategory = true
                                                 HapticManager.shared.selection()
                                             } label: {
                                                 HStack(spacing: 4) {
@@ -275,6 +294,8 @@ struct TransactionInputView: View {
                                                 )
                                             }
                                             .buttonStyle(.plain)
+                                            .accessibilityLabel("カテゴリ: \(cat.name)\(categoryId == cat.id ? "、選択中" : "")")
+                                            .accessibilityHint("ダブルタップで\(cat.name)を選択します")
                                         }
                                     }
                                     .padding(.horizontal, 4)
@@ -302,6 +323,7 @@ struct TransactionInputView: View {
                             .padding(.leading, 4)
                         
                         TextField("メモを入力（任意）", text: $memo)
+                            .textInputAutocapitalization(.never)
                             .padding()
                             .background(Color.secondaryBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -319,18 +341,23 @@ struct TransactionInputView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("キャンセル") { close() }
+                        .accessibilityLabel("キャンセル")
+                        .accessibilityHint("入力を破棄して画面を閉じます")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(isEditing ? "更新" : "保存") {
                         save()
                     }
                     .disabled(!canSave || isSaving)
+                    .accessibilityLabel(isEditing ? "取引を更新" : "取引を保存")
+                    .accessibilityHint(canSave ? "ダブルタップで\(isEditing ? "更新" : "保存")します" : "金額を入力してください")
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("完了") {
                         focusedField = nil
                     }
+                    .accessibilityLabel("キーボードを閉じる")
                 }
             }
             // ★ ハーフモーダル対応（.medium: 半分, .large: 全画面）
@@ -338,6 +365,21 @@ struct TransactionInputView: View {
             // .visibleだとキーボードが出た時に自動で広がる
             .presentationDragIndicator(.visible)
             .onAppear { setupInitialValues() }
+            .onChange(of: categoryId) { _, _ in
+                // 初期化完了後のcategoryId変更はユーザー操作とみなす
+                // （frequentCategoryボタンは直接trueにしている）
+                if isInitialized {
+                    hasUserSelectedCategory = true
+                }
+            }
+            .alert("カテゴリ未選択", isPresented: $showCategoryConfirmAlert) {
+                Button("保存") {
+                    performSave()
+                }
+                Button("戻る", role: .cancel) {}
+            } message: {
+                Text("カテゴリが未選択です。「\(selectedCategoryName)」として保存しますか？")
+            }
             .alert("入力エラー", isPresented: $showValidationError) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -350,7 +392,7 @@ struct TransactionInputView: View {
                 }
             }
             .sheet(isPresented: $showSplitSheet) {
-                SplitTransactionView()
+                SplitTransactionView(sourceTransaction: editingTransaction)
             }
             .sheet(isPresented: $showReceiptScanner) {
                 ReceiptScannerView()
@@ -378,7 +420,11 @@ struct TransactionInputView: View {
             }
             .overlay(alignment: .bottom) {
                 if showBudgetSnackbar, let info = budgetSnackbarInfo {
-                    BudgetSnackbarView(info: info)
+                    BudgetSnackbarView(info: info, onDismiss: {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            showBudgetSnackbar = false
+                        }
+                    })
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                         .padding(.bottom, 20)
                         .zIndex(2)
@@ -411,6 +457,16 @@ struct TransactionInputView: View {
         }
     }
 
+    private var editQuickActionRow: some View {
+        HStack(spacing: 8) {
+            quickActionButton(
+                title: "分割に変換",
+                icon: "square.split.2x1",
+                color: .purple
+            ) { showSplitSheet = true }
+        }
+    }
+
     private func quickActionButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 2) {
@@ -426,6 +482,8 @@ struct TransactionInputView: View {
             .foregroundStyle(color)
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
+        .accessibilityLabel(title)
+        .accessibilityHint("ダブルタップで\(title)入力を開きます")
     }
 
     // MARK: - Logic
@@ -444,8 +502,11 @@ struct TransactionInputView: View {
             // しかし、意図的に未分類にしているかもしれないので、強制セットは避ける？
             // -> 入力画面では必ずカテゴリを選ぶUIになっているため、空ならデフォルトを入れてあげるのが自然。
             normalizeCategoryIfNeeded()
+            // 編集モードではカテゴリは既に設定済み
+            hasUserSelectedCategory = true
             // よく使うカテゴリをキャッシュ（編集時のタイプに合わせる）
             cachedFrequentCategories = dataStore.frequentlyUsedCategories(for: type, limit: 5)
+            isInitialized = true
             return
         }
 
@@ -454,6 +515,11 @@ struct TransactionInputView: View {
         // よく使うカテゴリをキャッシュ（初期表示時に固定して、選択時の画面ジャンプを防止）
         cachedFrequentCategories = dataStore.frequentlyUsedCategories(for: type, limit: 5)
         focusedField = nil
+        // 初期化完了後のcategoryId変更をユーザー操作として検知するため、
+        // DispatchQueueで1フレーム遅延させてフラグをセット
+        DispatchQueue.main.async {
+            isInitialized = true
+        }
     }
     
     private func normalizeCategoryIfNeeded(forceToFirstIfEmpty: Bool = false) {
@@ -473,6 +539,33 @@ struct TransactionInputView: View {
 
     private func save() {
         guard !isSaving else { return }
+
+        let cleaned = amountText
+            .replacingOccurrences(of: ",", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let amount = evaluateExpression(cleaned), amount > 0 else {
+            validationMessage = "金額を正しく入力してください（例: 100+250）。"
+            showValidationError = true
+            return
+        }
+
+        // カテゴリが未選択ならデフォルトを設定（アラート表示用に先にセット）
+        if categoryId == nil {
+            normalizeCategoryIfNeeded(forceToFirstIfEmpty: true)
+        }
+
+        // カテゴリを明示的に選択していない場合は確認アラートを表示
+        if !hasUserSelectedCategory {
+            showCategoryConfirmAlert = true
+            return
+        }
+
+        performSave()
+    }
+
+    private func performSave() {
+        guard !isSaving else { return }
         isSaving = true
         defer { isSaving = false }
 
@@ -490,7 +583,7 @@ struct TransactionInputView: View {
         if categoryId == nil {
             normalizeCategoryIfNeeded(forceToFirstIfEmpty: true)
         }
-        
+
         // Haptic Feedback
         HapticManager.shared.impact()
 
@@ -555,6 +648,7 @@ struct TransactionInputView: View {
         isRecurring = false
         // カテゴリリセット
         normalizeCategoryIfNeeded(forceToFirstIfEmpty: true)
+        hasUserSelectedCategory = false
         focusedField = nil
     }
 
@@ -591,10 +685,12 @@ struct TransactionInputView: View {
             showBudgetSnackbar = true
         }
 
-        // 3秒後に自動で非表示
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
-            withAnimation(.easeOut(duration: 0.3)) {
-                showBudgetSnackbar = false
+        // 予算超過時は自動消去しない（ユーザーが手動で閉じる）
+        if remaining >= 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    showBudgetSnackbar = false
+                }
             }
         }
     }
@@ -621,6 +717,7 @@ struct BudgetSnackbarInfo {
 
 struct BudgetSnackbarView: View {
     let info: BudgetSnackbarInfo
+    var onDismiss: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -639,6 +736,14 @@ struct BudgetSnackbarView: View {
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundStyle(.red)
+                }
+
+                Button {
+                    onDismiss?()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
 
